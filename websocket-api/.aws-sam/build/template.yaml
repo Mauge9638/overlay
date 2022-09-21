@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: websocket-api
+Transform:
+- AWS::Serverless-2016-10-31
+Resources:
+  SampleTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+  MyLambdaRouteHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/websocket-response.simpleMessage
+      Timeout: 30
+      Runtime: nodejs16.x
+      Policies:
+      - AWSLambdaFullAccess
+      - CloudWatchLogsFullAccess
+      - AmazonAPIGatewayInvokeFullAccess
+      - AmazonAPIGatewayAdministrator
+      CodeUri: MyLambdaRouteHandlerFunction
+    Metadata:
+      SamResourceId: MyLambdaRouteHandlerFunction
+  WebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: WebsocketMessenger
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: \\$production
+  ConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: WebSocketApi
+      RouteKey: $connect
+      AuthorizationType: CUSTOM
+      OperationName: ConnectRoute
+  TestRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: WebSocketApi
+      RouteKey: test
+      OperationName: TestRoute
+      Target:
+        Fn::Join:
+        - /
+        - - integrations
+          - Ref: TestLambdaIntegration
+  TestLambdaIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: WebSocketApi
+      Description: Test Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: 'Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MyLambdaRouteHandlerFunction.Arn}/invocations'

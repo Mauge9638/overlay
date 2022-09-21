@@ -1,0 +1,35 @@
+{
+  "configurations": [
+    {
+      "type": "aws-sam",
+      "request": "direct-invoke",
+      "name": "websocket-api:getByIdFunction",
+      "invokeTarget": {
+        "target": "template",
+        "templatePath": "${workspaceFolder}/websocket-api/template.yaml",
+        "logicalId": "getByIdFunction"
+      },
+      "lambda": {
+        "payload": {},
+        "environmentVariables": {}
+      }
+    },
+    {
+      "type": "aws-sam",
+      "request": "direct-invoke",
+      "name": "API websocket-api:getByIdFunction",
+      "invokeTarget": {
+        "target": "api",
+        "templatePath": "${workspaceFolder}/websocketApi/websocket-api/template.yaml",
+        "logicalId": "getByIdFunction"
+      },
+      "api": {
+        "path": "/",
+        "httpMethod": "get",
+        "payload": {
+          "json": {}
+        }
+      }
+    }
+  ]
+}
