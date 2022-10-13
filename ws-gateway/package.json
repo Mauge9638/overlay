@@ -1,10 +1,10 @@
 {
   "name": "example-ws-gateway-sam",
   "version": "1.0.0",
-  "description": "Example WebSocket API Gateway Application.",
+  "description": "WebSocket API Gateway Application.",
   "main": "index.js",
   "license": "MIT",
-  "author": "David Sandor",
+  "author": "Magnus Stuart Juul",
   "scripts": {
     "deploy": "npm run fix-npm-timestamps && BUILD_S3_BUCKET=my-websocket-apigw-example NODE_ENV=dev npm run ws-package && npm run ws-deploy-package",
     "ws-package": "sam package --template-file template.yaml --s3-bucket my-websocket-apigw-example --output-template-file packaged.yaml",

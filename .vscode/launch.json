@@ -3,6 +3,34 @@
     {
       "type": "aws-sam",
       "request": "direct-invoke",
+      "name": "ws-gateway:ConnectionHandlerFunction",
+      "invokeTarget": {
+        "target": "template",
+        "templatePath": "${workspaceFolder}/ws-gateway/template.yaml",
+        "logicalId": "ConnectionHandlerFunction"
+      },
+      "lambda": {
+        "payload": {},
+        "environmentVariables": {}
+      }
+    },
+    {
+      "type": "aws-sam",
+      "request": "direct-invoke",
+      "name": "ws-gateway:ConnectionHandlerFunction",
+      "invokeTarget": {
+        "target": "template",
+        "templatePath": "${workspaceFolder}/ws-gateway/template.yaml",
+        "logicalId": "ConnectionHandlerFunction"
+      },
+      "lambda": {
+        "payload": {},
+        "environmentVariables": {}
+      }
+    },
+    {
+      "type": "aws-sam",
+      "request": "direct-invoke",
       "name": "websocket-api:getByIdFunction",
       "invokeTarget": {
         "target": "template",
