@@ -36,7 +36,7 @@ const connectionStatus = ref();
 let webSocketConnection: WebSocket;
 
 webSocketConnection = new WebSocket(
-  "wss://zl9fcztz5j.execute-api.eu-central-1.amazonaws.com/v1"
+  "wss://e3uce08hu5.execute-api.eu-central-1.amazonaws.com/v1"
 );
 webSocketConnection.onopen = (event) => {
   console.log("onopen");

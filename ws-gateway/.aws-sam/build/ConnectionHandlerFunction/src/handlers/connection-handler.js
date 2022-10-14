@@ -1,6 +1,6 @@
 const aws = require("aws-sdk");
-const dynamodb = require("aws-sdk/clients/dynamodb");
-const docClient = new dynamodb.DocumentClient();
+// const dynamodb = require("aws-sdk/clients/dynamodb");
+const docClient = new aws.DynamoDB.DocumentClient();
 const tableName = process.env.SAMPLE_TABLE;
 
 const getSocketContext = (event) => {
@@ -47,17 +47,22 @@ exports.connectionHandler = async (event) => {
     console.log(routeKey);
     switch (routeKey) {
       case "$connect":
-        // var params = {
-        //   TableName: tableName,
-        //   Item: { id: "abcd1234", name: connectionId },
-        // };
-
-        // await docClient.put(params).promise();
+        await docClient
+          .put({
+            TableName: tableName,
+            Item: {
+              id: connectionId,
+              name: connectionId,
+            },
+          })
+          .promise();
         break;
       case "test":
         await send(connectionId, {
           message: `This response was pushed through Lambda by the user: ${body?.name}. To the user with connectionId: ${connectionId}`,
         });
+        break;
+      case "sendToAllUsers":
         break;
 
       default:

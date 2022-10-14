@@ -48,6 +48,7 @@ Resources:
         - CloudWatchLogsFullAccess
         - AmazonAPIGatewayInvokeFullAccess
         - AmazonAPIGatewayAdministrator
+        - AmazonDynamoDBFullAccess
         - DynamoDBCrudPolicy:
             TableName: !Ref ConnectionsTable
 
@@ -120,14 +121,18 @@ Resources:
       Principal: apigateway.amazonaws.com
 
   ConnectionsTable:
-    Type: AWS::Serverless::SimpleTable
+    Type: AWS::DynamoDB::Table
     Properties:
-      PrimaryKey:
-        Name: id
-        Type: String
+      TableName: ConnectionsTable
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
       ProvisionedThroughput:
-        ReadCapacityUnits: 2
-        WriteCapacityUnits: 2
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
 
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
