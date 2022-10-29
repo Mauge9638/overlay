@@ -1,5 +1,11 @@
 <template>
   <div class="container">
+    <div class="videoJsPlayer">
+      <VideoJSComponent
+        :options="videoJsOptions"
+        title="Video.js Player"
+      ></VideoJSComponent>
+    </div>
     connection is: {{ connectionStatus }}
     <div class="websocket_output">
       <div class="input_field">
@@ -28,6 +34,21 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
+import VideoJSComponent from "./VideoJSComponent.vue";
+import ironGrip from "../assets/videos/irongrip.mp4";
+import rushingB from "../assets/videos/rushingb.mp4";
+
+const videoJsOptions = {
+  autoplay: "any",
+  preload: "auto",
+  controls: true,
+  fill: true,
+  playbackRates: [0.5, 1, 1.5, 2],
+  sources: [
+    { src: ironGrip, type: "video/mp4" },
+    { src: rushingB, type: "video/mp4" },
+  ],
+};
 
 const inputMessage = ref("");
 const outputMessage = ref("");
@@ -66,23 +87,30 @@ const sendMessage = () => {
 .container {
   display: grid;
   grid: 100px / auto auto auto;
+  position: absolute;
+  top: 10px;
+  left: 10px;
 }
 .container > div {
   border: 1px solid silver;
 }
-.container .websocket_output {
+.container .videoJsPlayer {
   grid-column: 1;
+  display: grid;
+}
+.container .websocket_output {
+  grid-column: 2;
   display: grid;
   height: 200px;
 }
 .container .divider {
-  grid-column: 2;
+  grid-column: 3;
   margin: 10px;
   border: 0px !important;
 }
 
 .container .websocket_input {
-  grid-column: 4;
+  grid-column: 5;
   display: grid;
   height: 200px;
 }
