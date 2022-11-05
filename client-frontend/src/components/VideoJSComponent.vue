@@ -1,6 +1,7 @@
 <template>
   <div>{{ title }}</div>
-  <video-js id="rushingBVid" />
+  <div class="video-wrapper"></div>
+  <video-js :id="title" />
 </template>
 
 <script setup lang="ts">
@@ -13,15 +14,19 @@ const props = defineProps({
 });
 
 const optionPropRef = toRef(props, "options");
+const titlePropRef = toRef(props, "title");
 onMounted(() => {
-  const player = videojs("rushingBVid", optionPropRef.value);
+  const player = videojs(`${titlePropRef.value}`, optionPropRef.value);
+
+  const overlay = document.getElementsByTagName("video")[0];
+  document.getElementsByClassName("video-wrapper")[0].appendChild(overlay);
   /*   const getSource = (source) => {
     import(source).then((source) => {
       sourceRef.value = source.default;
     });
   };
   getSource(props.src); */
-  player.controlBar.on();
+  // player.controlBar.on();
 });
 </script>
 

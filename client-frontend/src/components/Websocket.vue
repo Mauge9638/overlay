@@ -1,11 +1,5 @@
 <template>
   <div class="container">
-    <div class="videoJsPlayer">
-      <VideoJSComponent
-        :options="videoJsOptions"
-        title="Video.js Player"
-      ></VideoJSComponent>
-    </div>
     connection is: {{ connectionStatus }}
     <div class="websocket_output">
       <div class="input_field">
@@ -29,6 +23,22 @@
         ></textarea>
       </div>
     </div>
+    <div class="videoPlayers">
+      <div class="overlay" @click="test"><p>This is the overlay</p></div>
+      <div class="overlay2" @click="test"><p>This is the overlay</p></div>
+      <div class="videoJsPlayer">
+        <VideoJSComponent
+          :options="videoJsOptions"
+          title="VideoJsPlayer"
+        ></VideoJSComponent>
+      </div>
+      <div class="videoJsPlayer2">
+        <VideoJSComponent
+          :options="videoJsOptions2"
+          title="VideoJsPlayer2"
+        ></VideoJSComponent>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -44,17 +54,39 @@ const videoJsOptions = {
   controls: true,
   fill: true,
   playbackRates: [0.5, 1, 1.5, 2],
-  sources: [
-    { src: ironGrip, type: "video/mp4" },
-    { src: rushingB, type: "video/mp4" },
-  ],
+  sources: { src: ironGrip, type: "video/mp4" },
+};
+const videoJsOptions2 = {
+  autoplay: "any",
+  preload: "auto",
+  controls: true,
+  fill: true,
+  playbackRates: [0.5, 1, 1.5, 2],
+  sources: { src: rushingB, type: "video/mp4" },
 };
 
 const inputMessage = ref("");
 const outputMessage = ref("");
 const connectionStatus = ref();
 
+const test = () => {
+  console.log("test");
+};
+
 let webSocketConnection: WebSocket;
+
+onMounted(() => {
+  const overlay = document.getElementsByClassName("overlay")[0];
+  document
+    .getElementsByClassName("videoJsPlayer")[0]
+    .getElementsByClassName("video-wrapper")[0]
+    .appendChild(overlay);
+  const overlay2 = document.getElementsByClassName("overlay2")[0];
+  document
+    .getElementsByClassName("videoJsPlayer2")[0]
+    .getElementsByClassName("video-wrapper")[0]
+    .appendChild(overlay2);
+});
 
 webSocketConnection = new WebSocket(
   "wss://e3uce08hu5.execute-api.eu-central-1.amazonaws.com/v1"
@@ -85,23 +117,47 @@ const sendMessage = () => {
 
 <style>
 .container {
-  display: grid;
-  grid: 100px / auto auto auto;
   position: absolute;
   top: 10px;
   left: 10px;
+  display: grid;
+  grid-template-columns: 24vw 24vw 24vw 24vw;
+  grid-template-rows: auto;
+  grid-template-areas:
+    "websocketOutput websocketInput websocketInput websocketInput"
+    "videoPlayers videoPlayers videoPlayers videoPlayers"
+    "videoPlayers videoPlayers videoPlayers videoPlayers";
 }
 .container > div {
   border: 1px solid silver;
 }
-.container .videoJsPlayer {
-  grid-column: 1;
+
+.videoPlayers {
+  grid-area: videoPlayers;
   display: grid;
+  grid-template-areas:
+    "videoJsPlayer videoJsPlayer videoJsPlayer2 videoJsPlayer2"
+    "videoJsPlayer videoJsPlayer videoJsPlayer2 videoJsPlayer2";
+}
+
+.videoJsPlayer {
+  grid-area: videoJsPlayer;
+}
+
+.videoJsPlayer video-js {
+  position: relative;
+}
+.videoJsPlayer .video-wrapper {
+  position: relative;
+}
+
+.videoJsPlayer2 {
+  grid-area: videoJsPlayer2;
 }
 .container .websocket_output {
-  grid-column: 2;
   display: grid;
   height: 200px;
+  grid-area: websocketOutput;
 }
 .container .divider {
   grid-column: 3;
@@ -110,9 +166,9 @@ const sendMessage = () => {
 }
 
 .container .websocket_input {
-  grid-column: 5;
   display: grid;
   height: 200px;
+  grid-area: websocketInput;
 }
 .container .websocket_input textarea {
   height: 100px;
@@ -122,5 +178,41 @@ const sendMessage = () => {
 }
 .container .websocket_output button {
   grid-row: 2;
+}
+.overlay {
+  position: relative;
+  width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.overlay {
+  position: absolute;
+  background: rgba(138, 39, 64, 0.5);
+  border-radius: 5px;
+  height: 100px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+}
+.overlay p {
+  background: blue;
+  pointer-events: all;
+}
+.overlay2 {
+  position: absolute;
+  background: rgba(138, 39, 64, 0.5);
+  border-radius: 5px;
+  height: 100px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+}
+.overlay2 p {
+  background: blue;
+  pointer-events: all;
 }
 </style>
