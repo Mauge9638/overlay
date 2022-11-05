@@ -1,6 +1,6 @@
 <template>
   <div>{{ title }}</div>
-  <div class="video-wrapper"></div>
+  <!-- <div :class="`video-wrapper-for-${title}`"></div> -->
   <video-js :id="title" />
 </template>
 
@@ -17,9 +17,20 @@ const optionPropRef = toRef(props, "options");
 const titlePropRef = toRef(props, "title");
 onMounted(() => {
   const player = videojs(`${titlePropRef.value}`, optionPropRef.value);
-
-  const overlay = document.getElementsByTagName("video")[0];
-  document.getElementsByClassName("video-wrapper")[0].appendChild(overlay);
+  /*   const overlay = document
+    .getElementById(titlePropRef.value ? titlePropRef.value : "")
+    ?.getElementsByTagName("video")[0];
+  document
+    .getElementsByClassName(
+      `video-wrapper-for-${titlePropRef.value ? titlePropRef.value : ""}`
+    )[0]
+    .appendChild(overlay);
+  console.log(
+    document.getElementsByClassName(
+      `video-wrapper-for-${titlePropRef.value ? titlePropRef.value : ""}`
+    )[0]
+  ); */
+  player.addClass("vjs-matrix");
   /*   const getSource = (source) => {
     import(source).then((source) => {
       sourceRef.value = source.default;
@@ -30,4 +41,6 @@ onMounted(() => {
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+@import "https://unpkg.com/video.js@7/dist/video-js.min.css";
+</style>
