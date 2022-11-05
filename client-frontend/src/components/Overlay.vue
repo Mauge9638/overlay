@@ -1,6 +1,6 @@
 <template>
   <div @click="test">
-    <ul>
+    <ul class="text-3xl font-bold underline">
       <li>Hej</li>
       <li>Hej</li>
       <li>Hej</li>
