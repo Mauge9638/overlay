@@ -22,10 +22,28 @@
           placeholder="Received message will appear here"
         ></textarea>
       </div>
+      <select
+        v-model="overlaySelectorRef"
+        name="overlaySelector"
+        id="overlaySelector"
+      >
+        <option value="a71yP3dJbmaFfsMra7TR">1</option>
+        <option value="YwfJuyDsRtpQQxduab8c">2</option>
+        <option value="EFryiW2ZMUxb_InlnkrP">3</option>
+        <option value="owGrQoXqtS2JKVoA1eMK">4</option>
+      </select>
     </div>
     <div class="videoPlayers">
-      <Overlay class="overlay" :options="overlayOptions" />
-      <Overlay class="overlay2" :options="overlayOptions" />
+      <Overlay
+        class="overlay"
+        :options="overlayOptions"
+        :overlay-chosen="overlaySelectorRef"
+      />
+      <Overlay
+        class="overlay2"
+        :options="overlayOptions"
+        :overlay-chosen="overlaySelectorRef"
+      />
       <div class="videoJsPlayer">
         <VideoJSComponent
           :options="videoJsOptions"
@@ -74,6 +92,7 @@ const videoJsOptions2 = {
 const inputMessage = ref("");
 const outputMessage = ref("");
 const connectionStatus = ref();
+const overlaySelectorRef = ref(0);
 
 let webSocketConnection: WebSocket;
 
@@ -90,8 +109,11 @@ onMounted(() => {
     .appendChild(overlay2); */
 });
 
-webSocketConnection = new WebSocket(
+/* webSocketConnection = new WebSocket(
   "wss://e3uce08hu5.execute-api.eu-central-1.amazonaws.com/v1"
+); */
+webSocketConnection = new WebSocket(
+  "wss://virkerikkelooller.execute-api.eu-central-1.amazonaws.com/v1"
 );
 webSocketConnection.onopen = (event) => {
   console.log("onopen");
