@@ -29,6 +29,28 @@ Resources:
       CodeUri: ConnectionHandlerFunction
     Metadata:
       SamResourceId: ConnectionHandlerFunction
+  OverlayIdCheckerHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/overlay-id-checker-handler.overlayIdCheckerHandler
+      Timeout: 30
+      Runtime: nodejs16.x
+      Environment:
+        Variables:
+          SAMPLE_TABLE:
+            Ref: ConnectionsTable
+      Policies:
+      - AWSLambda_FullAccess
+      - CloudWatchLogsFullAccess
+      - AmazonAPIGatewayInvokeFullAccess
+      - AmazonAPIGatewayAdministrator
+      - AmazonDynamoDBFullAccess
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: ConnectionsTable
+      CodeUri: OverlayIdCheckerHandlerFunction
+    Metadata:
+      SamResourceId: OverlayIdCheckerHandlerFunction
   ConnectRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
@@ -70,7 +92,28 @@ Resources:
       Description: Test Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
-        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ConnectionHandlerFunction.Arn}/invocations
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayIdCheckerHandlerFunction.Arn}/invocations
+  CheckOverlayCookieIdRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: MyWebSocketApi
+      RouteKey: checkOverlayCookieId
+      OperationName: CheckOverlayCookieIdRoute
+      Target:
+        Fn::Join:
+        - /
+        - - integrations
+          - Ref: CheckOverlayCookieIdLambdaIntegration
+  CheckOverlayCookieIdLambdaIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: MyWebSocketApi
+      Description: CheckOverlayCookieId Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayIdCheckerHandlerFunction.Arn}/invocations
   Stage:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
@@ -80,7 +123,7 @@ Resources:
         Ref: Deployment
       ApiId:
         Ref: MyWebSocketApi
-  PortfolioBlocksPermission:
+  ConnectionHandlerFunctionPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
     - MyWebSocketApi
@@ -89,6 +132,16 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName:
         Ref: ConnectionHandlerFunction
+      Principal: apigateway.amazonaws.com
+  OverlayIdCheckerHandlerFunctionPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+    - MyWebSocketApi
+    - OverlayIdCheckerHandlerFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Ref: OverlayIdCheckerHandlerFunction
       Principal: apigateway.amazonaws.com
   ConnectionsTable:
     Type: AWS::DynamoDB::Table
@@ -107,6 +160,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
     - TestRoute
+    - CheckOverlayCookieIdRoute
     - ConnectRoute
     Properties:
       ApiId:

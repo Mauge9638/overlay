@@ -27,7 +27,7 @@ const getSocketContext = (event) => {
   return { connectionId, endpoint, send, routeKey };
 };
 
-exports.connectionHandler = async (event) => {
+exports.overlayIdCheckerHandler = async (event) => {
   console.log(JSON.stringify(event, 2));
   console.log("event");
   console.log(event);
@@ -49,49 +49,56 @@ exports.connectionHandler = async (event) => {
 
     console.log(routeKey);
     switch (routeKey) {
-      case "$connect":
+      case "test":
+        await send(connectionId, {
+          message: `This response was pushed through Lambda by the user: ${body?.name}. To the user with connectionId: ${connectionId}`,
+        });
         break;
-      // case "test":
-      //   await send(connectionId, {
-      //     message: `This response was pushed through Lambda by the user: ${body?.name}. To the user with connectionId: ${connectionId}`,
-      //   });
-      //   break;
-      // case "checkOverlayCookieId":
-      //   console.log("JSON.stringify(body)");
-      //   console.log(JSON.stringify(body));
-      //   // if (body?.overlayIdCookieKey) {
-      //   //   const overlayIdCookieKey = body?.overlayIdCookieKey;
-      //   //   await docClient
-      //   //     .get(
-      //   //       { TableName: tableName, Key: { id: overlayIdCookieKey } },
-      //   //       async function (err, data) {
-      //   //         if (err) {
-      //   //           console.log(err);
-      //   //           await send({
-      //   //             connectionId,
-      //   //             message: `An error occurred: \n ${err}`,
-      //   //           });
-      //   //         } else {
-      //   //           console.log(data);
-      //   //           await send({
-      //   //             connectionId,
-      //   //             message: `Success in getting item from DynamoDB: \n ${data}`,
-      //   //           });
-      //   //         }
-      //   //       }
-      //   //     )
-      //   //     .promise();
-      //   // }
-      //   // await docClient
-      //   //   .put({
-      //   //     TableName: tableName,
-      //   //     Item: {
-      //   //       id: connectionId,
-      //   //       name: connectionId,
-      //   //     },
-      //   //   })
-      //   //   .promise();
-      //   break;
+      case "checkOverlayCookieId":
+        console.log("JSON.stringify(body)");
+        console.log(JSON.stringify(body));
+        if (body?.overlayIdCookieKey) {
+          const overlayIdCookieKey = body?.overlayIdCookieKey;
+          console.log(
+            "🚀 ~ file: overlay-id-checker-handler.js ~ line 62 ~ exports.overlayIdCheckerHandler= ~ overlayIdCookieKey",
+            overlayIdCookieKey
+          );
+          const params = {
+            TableName: tableName,
+            Key: { id: overlayIdCookieKey },
+          };
+          try {
+            await docClient
+              .get(params)
+              .promise()
+              .then(async (dataInGet) => {
+                console.log("dataInGet");
+                console.log(dataInGet);
+                await send(connectionId, {
+                  message: { message: "in the then", data: dataInGet },
+                });
+              })
+              .catch(async (errorInGet) => {
+                console.log("errorInGet");
+                console.log(errorInGet);
+                await send(connectionId, {
+                  message: { message: "in the catch", error: errorInGet },
+                });
+              });
+          } catch (error) {
+            console.log(error);
+          }
+        }
+        await docClient
+          .put({
+            TableName: tableName,
+            Item: {
+              id: connectionId,
+              name: connectionId,
+            },
+          })
+          .promise();
+        break;
       case "sendToAllUsers":
         break;
 

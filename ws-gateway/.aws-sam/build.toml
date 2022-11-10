@@ -8,6 +8,6 @@ architecture = "x86_64"
 handler = "authorizer.handler"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["ConnectionHandlerFunction"]
+functions = ["ConnectionHandlerFunction", "OverlayIdCheckerHandlerFunction"]
 
 [layer_build_definitions]

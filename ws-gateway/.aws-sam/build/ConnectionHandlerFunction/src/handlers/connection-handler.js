@@ -29,8 +29,11 @@ const getSocketContext = (event) => {
 
 exports.connectionHandler = async (event) => {
   console.log(JSON.stringify(event, 2));
-
+  console.log("event");
+  console.log(event);
   if (event.requestContext) {
+    console.log("event.requestContext");
+    console.log(event.requestContext);
     const { send } = getSocketContext(event);
     const connectionId = event.requestContext.connectionId;
     const routeKey = event.requestContext.routeKey;
@@ -47,21 +50,48 @@ exports.connectionHandler = async (event) => {
     console.log(routeKey);
     switch (routeKey) {
       case "$connect":
-        await docClient
-          .put({
-            TableName: tableName,
-            Item: {
-              id: connectionId,
-              name: connectionId,
-            },
-          })
-          .promise();
         break;
-      case "test":
-        await send(connectionId, {
-          message: `This response was pushed through Lambda by the user: ${body?.name}. To the user with connectionId: ${connectionId}`,
-        });
-        break;
+      // case "test":
+      //   await send(connectionId, {
+      //     message: `This response was pushed through Lambda by the user: ${body?.name}. To the user with connectionId: ${connectionId}`,
+      //   });
+      //   break;
+      // case "checkOverlayCookieId":
+      //   console.log("JSON.stringify(body)");
+      //   console.log(JSON.stringify(body));
+      //   // if (body?.overlayIdCookieKey) {
+      //   //   const overlayIdCookieKey = body?.overlayIdCookieKey;
+      //   //   await docClient
+      //   //     .get(
+      //   //       { TableName: tableName, Key: { id: overlayIdCookieKey } },
+      //   //       async function (err, data) {
+      //   //         if (err) {
+      //   //           console.log(err);
+      //   //           await send({
+      //   //             connectionId,
+      //   //             message: `An error occurred: \n ${err}`,
+      //   //           });
+      //   //         } else {
+      //   //           console.log(data);
+      //   //           await send({
+      //   //             connectionId,
+      //   //             message: `Success in getting item from DynamoDB: \n ${data}`,
+      //   //           });
+      //   //         }
+      //   //       }
+      //   //     )
+      //   //     .promise();
+      //   // }
+      //   // await docClient
+      //   //   .put({
+      //   //     TableName: tableName,
+      //   //     Item: {
+      //   //       id: connectionId,
+      //   //       name: connectionId,
+      //   //     },
+      //   //   })
+      //   //   .promise();
+      //   break;
       case "sendToAllUsers":
         break;
 

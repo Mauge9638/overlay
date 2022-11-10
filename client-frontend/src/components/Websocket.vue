@@ -109,16 +109,38 @@ onMounted(() => {
     .appendChild(overlay2); */
 });
 
-/* webSocketConnection = new WebSocket(
-  "wss://e3uce08hu5.execute-api.eu-central-1.amazonaws.com/v1"
-); */
 webSocketConnection = new WebSocket(
-  "wss://virkerikkelooller.execute-api.eu-central-1.amazonaws.com/v1"
+  "wss://e3uce08hu5.execute-api.eu-central-1.amazonaws.com/v1"
 );
+// webSocketConnection = new WebSocket(
+//   "wss://virkerikkelooller.execute-api.eu-central-1.amazonaws.com/v1"
+// );
+
+const getCookie = (cookieName: String) => {
+  const name = cookieName + "=";
+  const cookies = document.cookie.split(";");
+  for (let i = 0; i < cookies.length; i++) {
+    let currentCookie = cookies[i];
+    while (currentCookie.charAt(0) == " ") {
+      currentCookie = currentCookie.substring(1);
+    }
+    if (currentCookie.indexOf(name) == 0) {
+      return currentCookie.substring(name.length, currentCookie.length);
+    }
+  }
+  return null;
+};
+
 webSocketConnection.onopen = (event) => {
   console.log("onopen");
   console.log(event);
   connectionStatus.value = event.type;
+  // const testCookie = getCookie("overlayIdCookieKey");
+  // console.log("testCookie");
+  // console.log(testCookie);
+  // webSocketConnection.send(
+  //   `{ "action":  "checkOverlayCookieId", "overlayIdCookieKey": "${testCookie}"}`
+  // );
 };
 webSocketConnection.onerror = (event) => {
   console.log("onerror");
@@ -127,12 +149,16 @@ webSocketConnection.onerror = (event) => {
 };
 webSocketConnection.onmessage = (event) => {
   console.log("onmessage");
-  console.log(event.data);
+  console.log(event);
   inputMessage.value = JSON.parse(event.data).message;
 };
 
 const sendMessage = () => {
   console.log(outputMessage.value);
+  const testCookie = getCookie("overlayIdCookieKey");
+  // webSocketConnection.send(
+  //   `{ "action": "checkOverlayCookieId", "overlayIdCookieKey": "${testCookie}"}`
+  // );
   webSocketConnection.send(
     `{ "action": "test", "name": "${outputMessage.value}"}`
   );
