@@ -19,7 +19,7 @@ const getSocketContext = (event) => {
           Data: Buffer.from(JSON.stringify(data)),
         })
         .promise();
-    } catch (error) {
+    } catch (err) {
       console.log("Error in send: ", err);
     }
   };
@@ -57,47 +57,94 @@ exports.overlayIdCheckerHandler = async (event) => {
       case "checkOverlayCookieId":
         console.log("JSON.stringify(body)");
         console.log(JSON.stringify(body));
+        console.log("body");
+        console.log(body);
         if (body?.overlayIdCookieKey) {
-          const overlayIdCookieKey = body?.overlayIdCookieKey;
           console.log(
-            "🚀 ~ file: overlay-id-checker-handler.js ~ line 62 ~ exports.overlayIdCheckerHandler= ~ overlayIdCookieKey",
-            overlayIdCookieKey
+            "INSIDE THE IF STATEMENT with condition: (body?.overlayIdCookieKey)"
           );
+          const overlayIdCookieKey = body?.overlayIdCookieKey;
           const params = {
             TableName: tableName,
             Key: { id: overlayIdCookieKey },
           };
           try {
-            await docClient
-              .get(params)
-              .promise()
-              .then(async (dataInGet) => {
-                console.log("dataInGet");
-                console.log(dataInGet);
-                await send(connectionId, {
-                  message: { message: "in the then", data: dataInGet },
-                });
+            console.log("INSIDE THE TRY");
+            /*             await docClient
+              .get(params, (err, data) => {
+                if (err) {
+                  console.log("return err");
+                  return err;
+                } else {
+                  console.log("return data");
+                  return data;
+                }
               })
-              .catch(async (errorInGet) => {
-                console.log("errorInGet");
-                console.log(errorInGet);
-                await send(connectionId, {
+              .promise()
+              .then((data) => {
+                console.log("hello in here", data);
+              }); */
+            await docClient
+              .get(params, (err, data) => {
+                if (err) {
+                  return err;
+                } else {
+                  return data;
+                }
+              })
+              .promise()
+              .then(async (data) => {
+                console.log("data from docClient.get");
+                console.log(data);
+                // If id does not exist in overlayCookieIdTable
+                if (Object.keys(data).length <= 0) {
+                  await docClient
+                    .put(
+                      {
+                        TableName: tableName,
+                        Item: {
+                          id: connectionId,
+                          name: connectionId,
+                        },
+                      },
+                      (err, data) => {
+                        if (err) {
+                          return err;
+                        } else {
+                          return data;
+                        }
+                      }
+                    )
+                    .promise()
+                    .then((data) => {
+                      console.log("data from docClient.put");
+                      console.log(data);
+                      send(connectionId, {
+                        newOverlayIdCookieKey: connectionId,
+                      });
+                    })
+                    .catch((err) => {
+                      send(connectionId, {
+                        error: err,
+                      });
+                    });
+                } else {
+                  send(connectionId, {
+                    message: "overlayCookieId exists in db",
+                  });
+                }
+              })
+              .catch((err) => {
+                console.log("error from docClient.get");
+                console.log(err);
+                send(connectionId, {
                   message: { message: "in the catch", error: errorInGet },
                 });
               });
-          } catch (error) {
-            console.log(error);
+          } catch (err) {
+            console.log(err);
           }
         }
-        await docClient
-          .put({
-            TableName: tableName,
-            Item: {
-              id: connectionId,
-              name: connectionId,
-            },
-          })
-          .promise();
         break;
       case "sendToAllUsers":
         break;

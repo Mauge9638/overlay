@@ -93,6 +93,7 @@ const inputMessage = ref("");
 const outputMessage = ref("");
 const connectionStatus = ref();
 const overlaySelectorRef = ref(0);
+const connectionIsOpen = ref(false);
 
 let webSocketConnection: WebSocket;
 
@@ -110,13 +111,13 @@ onMounted(() => {
 });
 
 webSocketConnection = new WebSocket(
-  "wss://e3uce08hu5.execute-api.eu-central-1.amazonaws.com/v1"
+  "wss://u6bu83j6m0.execute-api.eu-central-1.amazonaws.com/v1"
 );
 // webSocketConnection = new WebSocket(
 //   "wss://virkerikkelooller.execute-api.eu-central-1.amazonaws.com/v1"
 // );
 
-const getCookie = (cookieName: String) => {
+const getCookie = (cookieName: string): string => {
   const name = cookieName + "=";
   const cookies = document.cookie.split(";");
   for (let i = 0; i < cookies.length; i++) {
@@ -128,40 +129,65 @@ const getCookie = (cookieName: String) => {
       return currentCookie.substring(name.length, currentCookie.length);
     }
   }
-  return null;
+  return "";
+};
+
+const setCookie = (
+  cookieName: string,
+  cookieValue: string,
+  existDays: number
+) => {
+  const expiryDate = new Date();
+  expiryDate.setTime(expiryDate.getTime() + existDays * 24 * 60 * 60 * 1000);
+  let expires = "expires=" + expiryDate.toUTCString();
+  document.cookie = cookieName + "=" + cookieValue + ";" + expires + ";path=/";
+};
+
+const checkOverlayCookieIdValidity = (overlayCookieKey: String) => {
+  console.log("Checking for validity");
+  /*  webSocketConnection.send(
+    `{ "action": "checkOverlayCookieId", "overlayIdCookieKey": "${overlayCookieKey}"}`
+  ); */
 };
 
 webSocketConnection.onopen = (event) => {
   console.log("onopen");
   console.log(event);
   connectionStatus.value = event.type;
-  // const testCookie = getCookie("overlayIdCookieKey");
-  // console.log("testCookie");
-  // console.log(testCookie);
-  // webSocketConnection.send(
-  //   `{ "action":  "checkOverlayCookieId", "overlayIdCookieKey": "${testCookie}"}`
-  // );
+  connectionIsOpen.value = true;
+  const testCookie = getCookie("overlayIdCookieKey");
+  console.log("testCookie");
+  console.log(testCookie);
+  webSocketConnection.send(
+    `{ "action": "checkOverlayCookieId", "overlayIdCookieKey": "${testCookie}"}`
+  );
 };
 webSocketConnection.onerror = (event) => {
   console.log("onerror");
   console.log(event);
   connectionStatus.value = event.type;
+  connectionIsOpen.value = true;
 };
 webSocketConnection.onmessage = (event) => {
   console.log("onmessage");
   console.log(event);
+  console.log(event.data);
+  if (JSON.parse(event.data)?.newOverlayIdCookieKey) {
+    const newOverlayIdCookieKey = JSON.parse(event.data)?.newOverlayIdCookieKey;
+    setCookie("overlayIdCookieKey", newOverlayIdCookieKey, 365);
+  }
   inputMessage.value = JSON.parse(event.data).message;
 };
 
 const sendMessage = () => {
   console.log(outputMessage.value);
   const testCookie = getCookie("overlayIdCookieKey");
-  // webSocketConnection.send(
-  //   `{ "action": "checkOverlayCookieId", "overlayIdCookieKey": "${testCookie}"}`
-  // );
-  webSocketConnection.send(
+  console.log("testCookie");
+  console.log(testCookie);
+  checkOverlayCookieIdValidity(testCookie);
+  /*   webSocketConnection.send(
     `{ "action": "test", "name": "${outputMessage.value}"}`
-  );
+  ); */
 };
 </script>
 
