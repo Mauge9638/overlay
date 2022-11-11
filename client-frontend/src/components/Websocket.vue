@@ -111,7 +111,7 @@ onMounted(() => {
 });
 
 webSocketConnection = new WebSocket(
-  "wss://u6bu83j6m0.execute-api.eu-central-1.amazonaws.com/v1"
+  "wss://sonim20w02.execute-api.eu-central-1.amazonaws.com/v1"
 );
 // webSocketConnection = new WebSocket(
 //   "wss://virkerikkelooller.execute-api.eu-central-1.amazonaws.com/v1"
@@ -143,24 +143,28 @@ const setCookie = (
   document.cookie = cookieName + "=" + cookieValue + ";" + expires + ";path=/";
 };
 
-const checkOverlayCookieIdValidity = (overlayCookieKey: String) => {
+const checkOverlayCookieIdValidity = () => {
+  console.log("Getting cookie with the name: overlayIdCookieKey");
+  const overlayIdCookieKey = getCookie("overlayIdCookieKey");
+  console.log("overlayIdCookieKey:", overlayIdCookieKey);
   console.log("Checking for validity");
-  /*  webSocketConnection.send(
-    `{ "action": "checkOverlayCookieId", "overlayIdCookieKey": "${overlayCookieKey}"}`
-  ); */
+  webSocketConnection.send(
+    `{ "action": "checkOverlayCookieId", "overlayIdCookieKey": "${overlayIdCookieKey}"}`
+  );
 };
 
-webSocketConnection.onopen = (event) => {
+webSocketConnection.onopen = async (event) => {
   console.log("onopen");
   console.log(event);
   connectionStatus.value = event.type;
   connectionIsOpen.value = true;
-  const testCookie = getCookie("overlayIdCookieKey");
-  console.log("testCookie");
-  console.log(testCookie);
-  webSocketConnection.send(
-    `{ "action": "checkOverlayCookieId", "overlayIdCookieKey": "${testCookie}"}`
-  );
+  // setInterval(() => {
+  //   checkOverlayCookieIdValidity();
+  // }, 4000);
+  checkOverlayCookieIdValidity();
+  // webSocketConnection.send(
+  //   `{ "action": "checkOverlayCookieId", "overlayIdCookieKey": "${testCookie}"}`
+  // );
 };
 webSocketConnection.onerror = (event) => {
   console.log("onerror");
@@ -181,10 +185,7 @@ webSocketConnection.onmessage = (event) => {
 
 const sendMessage = () => {
   console.log(outputMessage.value);
-  const testCookie = getCookie("overlayIdCookieKey");
-  console.log("testCookie");
-  console.log(testCookie);
-  checkOverlayCookieIdValidity(testCookie);
+  checkOverlayCookieIdValidity();
   /*   webSocketConnection.send(
     `{ "action": "test", "name": "${outputMessage.value}"}`
   ); */

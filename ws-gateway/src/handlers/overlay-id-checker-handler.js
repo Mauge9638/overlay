@@ -1,4 +1,5 @@
 const aws = require("aws-sdk");
+const crypto = require("crypto");
 // const dynamodb = require("aws-sdk/clients/dynamodb");
 const docClient = new aws.DynamoDB.DocumentClient();
 const tableName = process.env.SAMPLE_TABLE;
@@ -27,13 +28,50 @@ const getSocketContext = (event) => {
   return { connectionId, endpoint, send, routeKey };
 };
 
+const checkConnectionsTable = async (value) => {
+  return docClient
+    .get({
+      TableName: tableName,
+      Key: { id: value },
+    })
+    .promise();
+};
+
+const addToConnectionsTable = async (idValue, connectionValue, isNew) => {
+  return docClient
+    .put({
+      TableName: tableName,
+      Item: {
+        id: idValue,
+        currentConnectionId: connectionValue,
+        currentlyConnected: true,
+        testValue: {
+          key1: "123123",
+          key2: 129312,
+          objects: { key1: "yes", key2: "no", key3: true },
+        },
+      },
+    })
+    .promise();
+};
+
+const updateConnectionsTable = async (
+  idValue,
+  UpdateExpression,
+  ExpressionAttributeValues
+) => {
+  return docClient
+    .update({
+      TableName: tableName,
+      Key: { id: idValue },
+      UpdateExpression: UpdateExpression,
+      ExpressionAttributeValues: ExpressionAttributeValues,
+    })
+    .promise();
+};
+
 exports.overlayIdCheckerHandler = async (event) => {
-  console.log(JSON.stringify(event, 2));
-  console.log("event");
-  console.log(event);
   if (event.requestContext) {
-    console.log("event.requestContext");
-    console.log(event.requestContext);
     const { send } = getSocketContext(event);
     const connectionId = event.requestContext.connectionId;
     const routeKey = event.requestContext.routeKey;
@@ -47,7 +85,6 @@ exports.overlayIdCheckerHandler = async (event) => {
       console.log("Error in try catch for event.body");
     }
 
-    console.log(routeKey);
     switch (routeKey) {
       case "test":
         await send(connectionId, {
@@ -55,94 +92,70 @@ exports.overlayIdCheckerHandler = async (event) => {
         });
         break;
       case "checkOverlayCookieId":
-        console.log("JSON.stringify(body)");
-        console.log(JSON.stringify(body));
-        console.log("body");
-        console.log(body);
         if (body?.overlayIdCookieKey) {
-          console.log(
-            "INSIDE THE IF STATEMENT with condition: (body?.overlayIdCookieKey)"
-          );
           const overlayIdCookieKey = body?.overlayIdCookieKey;
-          const params = {
-            TableName: tableName,
-            Key: { id: overlayIdCookieKey },
-          };
           try {
-            console.log("INSIDE THE TRY");
-            /*             await docClient
-              .get(params, (err, data) => {
-                if (err) {
-                  console.log("return err");
-                  return err;
-                } else {
-                  console.log("return data");
-                  return data;
-                }
-              })
-              .promise()
+            return checkConnectionsTable(overlayIdCookieKey)
               .then((data) => {
-                console.log("hello in here", data);
-              }); */
-            await docClient
-              .get(params, (err, data) => {
-                if (err) {
-                  return err;
-                } else {
-                  return data;
-                }
-              })
-              .promise()
-              .then(async (data) => {
-                console.log("data from docClient.get");
-                console.log(data);
-                // If id does not exist in overlayCookieIdTable
                 if (Object.keys(data).length <= 0) {
-                  await docClient
-                    .put(
-                      {
-                        TableName: tableName,
-                        Item: {
-                          id: connectionId,
-                          name: connectionId,
-                        },
-                      },
-                      (err, data) => {
-                        if (err) {
-                          return err;
-                        } else {
-                          return data;
-                        }
-                      }
-                    )
-                    .promise()
-                    .then((data) => {
-                      console.log("data from docClient.put");
-                      console.log(data);
-                      send(connectionId, {
-                        newOverlayIdCookieKey: connectionId,
+                  const newOverlayIdCookieKey = crypto.randomUUID();
+                  return addToConnectionsTable(
+                    newOverlayIdCookieKey,
+                    connectionId
+                  )
+                    .then(() => {
+                      return send(connectionId, {
+                        newOverlayIdCookieKey: newOverlayIdCookieKey,
                       });
                     })
-                    .catch((err) => {
-                      send(connectionId, {
-                        error: err,
-                      });
+                    .then(() => {
+                      return Promise.resolve();
                     });
                 } else {
-                  send(connectionId, {
-                    message: "overlayCookieId exists in db",
+                  return updateConnectionsTable(
+                    overlayIdCookieKey,
+                    "set currentlyConnectedEndnuEn = :x, currentlyConnected = :y, testValue.objects.key4 = :testValueObjectsKey4",
+                    {
+                      ":testValueObjectsKey4": "din mor mand",
+                      ":x": false,
+                      ":y": true,
+                    }
+                  ).then(() => {
+                    return send(connectionId, {
+                      message: "overlayCookieId exists in db",
+                    }).then(() => {
+                      return Promise.resolve();
+                    });
                   });
                 }
               })
+              .then(() => {
+                const response = {
+                  isBase64Encoded: false,
+                  statusCode: 200,
+                  body: "",
+                };
+
+                return response;
+              })
               .catch((err) => {
-                console.log("error from docClient.get");
                 console.log(err);
-                send(connectionId, {
-                  message: { message: "in the catch", error: errorInGet },
-                });
-              });
+                const response = {
+                  isBase64Encoded: false,
+                  statusCode: 400,
+                  body: "",
+                };
+
+                return response;
+              })
+              .finally(() => {});
           } catch (err) {
-            console.log(err);
+            const response = {
+              isBase64Encoded: false,
+              statusCode: 400,
+              body: "",
+            };
+            return response;
           }
         }
         break;
@@ -153,13 +166,13 @@ exports.overlayIdCheckerHandler = async (event) => {
         break;
     }
   }
-  const response = {
-    isBase64Encoded: false,
-    statusCode: 200,
-    body: "",
-  };
+  // const response = {
+  //   isBase64Encoded: false,
+  //   statusCode: 200,
+  //   body: "",
+  // };
 
-  return response;
+  // return response;
 
   // Creates a new item, or replaces an old item with a new item
   // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#put-property
