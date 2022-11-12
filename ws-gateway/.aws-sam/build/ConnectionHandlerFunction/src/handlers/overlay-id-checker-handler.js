@@ -2,7 +2,7 @@ const aws = require("aws-sdk");
 const crypto = require("crypto");
 // const dynamodb = require("aws-sdk/clients/dynamodb");
 const docClient = new aws.DynamoDB.DocumentClient();
-const tableName = process.env.SAMPLE_TABLE;
+const tableName = process.env.CONNECTIONS_TABLE;
 
 const getSocketContext = (event) => {
   const { domainName, stage, connectionId, routeKey } = event.requestContext;
@@ -37,7 +37,7 @@ const checkConnectionsTable = async (value) => {
     .promise();
 };
 
-const addToConnectionsTable = async (idValue, connectionValue, isNew) => {
+const addToConnectionsTable = async (idValue, connectionValue) => {
   return docClient
     .put({
       TableName: tableName,
@@ -45,10 +45,14 @@ const addToConnectionsTable = async (idValue, connectionValue, isNew) => {
         id: idValue,
         currentConnectionId: connectionValue,
         currentlyConnected: true,
-        testValue: {
-          key1: "123123",
-          key2: 129312,
-          objects: { key1: "yes", key2: "no", key3: true },
+        overlays: {
+          overlay1: {
+            a71yP3dJbmaFfsMra7TR: { answered: true },
+            YwfJuyDsRtpQQxduab8c: { answered: false },
+            EFryiW2ZMUxb_InlnkrP: { answered: false },
+          },
+          overlay2: { key1: "yes", key2: "no", key3: true },
+          overlay3: { key1: "yes", key2: "no", key3: true },
         },
       },
     })
@@ -65,6 +69,19 @@ const updateConnectionsTable = async (
       TableName: tableName,
       Key: { id: idValue },
       UpdateExpression: UpdateExpression,
+      ExpressionAttributeValues: ExpressionAttributeValues,
+    })
+    .promise();
+};
+
+const scanConnectionsTable = async (
+  FilterExpression,
+  ExpressionAttributeValues
+) => {
+  return docClient
+    .scan({
+      TableName: tableName,
+      FilterExpression: FilterExpression,
       ExpressionAttributeValues: ExpressionAttributeValues,
     })
     .promise();
@@ -87,10 +104,20 @@ exports.overlayIdCheckerHandler = async (event) => {
 
     switch (routeKey) {
       case "test":
-        await send(connectionId, {
+        return send(connectionId, {
           message: `This response was pushed through Lambda by the user: ${body?.name}. To the user with connectionId: ${connectionId}`,
-        });
-        break;
+        })
+          .then(() => {
+            return Promise.resolve();
+          })
+          .then(() => {
+            const response = {
+              isBase64Encoded: false,
+              statusCode: 400,
+              body: "",
+            };
+            return response;
+          });
       case "checkOverlayCookieId":
         if (body?.overlayIdCookieKey) {
           const overlayIdCookieKey = body?.overlayIdCookieKey;
@@ -114,11 +141,10 @@ exports.overlayIdCheckerHandler = async (event) => {
                 } else {
                   return updateConnectionsTable(
                     overlayIdCookieKey,
-                    "set currentlyConnectedEndnuEn = :x, currentlyConnected = :y, testValue.objects.key4 = :testValueObjectsKey4",
+                    "set currentlyConnected = :currentlyConnected, currentConnectionId = :currentConnectionId",
                     {
-                      ":testValueObjectsKey4": "din mor mand",
-                      ":x": false,
-                      ":y": true,
+                      ":currentConnectionId": connectionId,
+                      ":currentlyConnected": true,
                     }
                   ).then(() => {
                     return send(connectionId, {
@@ -130,6 +156,16 @@ exports.overlayIdCheckerHandler = async (event) => {
                 }
               })
               .then(() => {
+                console.log("Scan on table");
+                return scanConnectionsTable(
+                  "currentlyConnected = :currentlyConnected",
+                  {
+                    ":currentlyConnected": true,
+                  }
+                );
+              })
+              .then((data) => {
+                console.log(data);
                 const response = {
                   isBase64Encoded: false,
                   statusCode: 200,

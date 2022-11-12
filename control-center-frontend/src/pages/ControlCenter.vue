@@ -77,6 +77,25 @@ const overlaySelected = ref({
   usersConnected: "",
   events: [],
 });
+
+let webSocketConnection: WebSocket;
+
+webSocketConnection = new WebSocket(
+  "wss://sonim20w02.execute-api.eu-central-1.amazonaws.com/v1"
+);
+webSocketConnection.onopen = async (event) => {
+  console.log("onopen");
+  console.log(event);
+};
+webSocketConnection.onerror = (event) => {
+  console.log("onerror");
+  console.log(event);
+};
+webSocketConnection.onmessage = (event) => {
+  console.log("onmessage");
+  console.log(event);
+  console.log(event.data);
+};
 </script>
 
 <style scoped>

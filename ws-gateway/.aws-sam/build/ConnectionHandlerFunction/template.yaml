@@ -41,7 +41,7 @@ Resources:
       Environment:
         Variables:
           # Make table name accessible as environment variable from function code during execution
-          SAMPLE_TABLE: !Ref ConnectionsTable
+          CONNECTIONS_TABLE: !Ref ConnectionsTable
       # CodeUri: ./
       Policies:
         - AWSLambda_FullAccess
@@ -61,7 +61,8 @@ Resources:
       Environment:
         Variables:
           # Make table name accessible as environment variable from function code during execution
-          SAMPLE_TABLE: !Ref ConnectionsTable
+          CONNECTIONS_TABLE: !Ref ConnectionsTable
+          OVERLAY_TABLE: !Ref OverlayTable
       # CodeUri: ./
       Policies:
         - AWSLambda_FullAccess
@@ -71,6 +72,8 @@ Resources:
         - AmazonDynamoDBFullAccess
         - DynamoDBCrudPolicy:
             TableName: !Ref ConnectionsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OverlayTable
 
   ConnectRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -81,13 +84,13 @@ Resources:
       Target: !Join
         - "/"
         - - "integrations"
-          - !Ref ConnectionLambdaIntegration
+          - !Ref ConnectLambdaIntegration
 
-  ConnectionLambdaIntegration:
+  ConnectLambdaIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId: !Ref MyWebSocketApi
-      Description: Connection Integration
+      Description: Connect Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ConnectionHandlerFunction.Arn}/invocations
@@ -175,6 +178,20 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: ConnectionsTable
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  OverlayTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: OverlayTable
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S

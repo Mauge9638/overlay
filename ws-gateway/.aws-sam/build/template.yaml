@@ -15,7 +15,7 @@ Resources:
       Runtime: nodejs16.x
       Environment:
         Variables:
-          SAMPLE_TABLE:
+          CONNECTIONS_TABLE:
             Ref: ConnectionsTable
       Policies:
       - AWSLambda_FullAccess
@@ -37,8 +37,10 @@ Resources:
       Runtime: nodejs16.x
       Environment:
         Variables:
-          SAMPLE_TABLE:
+          CONNECTIONS_TABLE:
             Ref: ConnectionsTable
+          OVERLAY_TABLE:
+            Ref: OverlayTable
       Policies:
       - AWSLambda_FullAccess
       - CloudWatchLogsFullAccess
@@ -48,6 +50,9 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName:
             Ref: ConnectionsTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: OverlayTable
       CodeUri: OverlayIdCheckerHandlerFunction
     Metadata:
       SamResourceId: OverlayIdCheckerHandlerFunction
@@ -62,13 +67,13 @@ Resources:
         Fn::Join:
         - /
         - - integrations
-          - Ref: ConnectionLambdaIntegration
-  ConnectionLambdaIntegration:
+          - Ref: ConnectLambdaIntegration
+  ConnectLambdaIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId:
         Ref: MyWebSocketApi
-      Description: Connection Integration
+      Description: Connect Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ConnectionHandlerFunction.Arn}/invocations
@@ -147,6 +152,19 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: ConnectionsTable
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+  OverlayTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: OverlayTable
       AttributeDefinitions:
       - AttributeName: id
         AttributeType: S

@@ -1,7 +1,7 @@
 const aws = require("aws-sdk");
 // const dynamodb = require("aws-sdk/clients/dynamodb");
 const docClient = new aws.DynamoDB.DocumentClient();
-const tableName = process.env.SAMPLE_TABLE;
+const tableName = process.env.CONNECTIONS_TABLE;
 
 const getSocketContext = (event) => {
   const { domainName, stage, connectionId, routeKey } = event.requestContext;
@@ -27,6 +27,34 @@ const getSocketContext = (event) => {
   return { connectionId, endpoint, send, routeKey };
 };
 
+const updateConnectionsTable = async (
+  idValue,
+  UpdateExpression,
+  ExpressionAttributeValues
+) => {
+  return docClient
+    .update({
+      TableName: tableName,
+      Key: { id: idValue },
+      UpdateExpression: UpdateExpression,
+      ExpressionAttributeValues: ExpressionAttributeValues,
+    })
+    .promise();
+};
+
+const scanConnectionsTable = async (
+  FilterExpression,
+  ExpressionAttributeValues
+) => {
+  return docClient
+    .scan({
+      TableName: tableName,
+      FilterExpression: FilterExpression,
+      ExpressionAttributeValues: ExpressionAttributeValues,
+    })
+    .promise();
+};
+
 exports.connectionHandler = async (event) => {
   console.log(JSON.stringify(event, 2));
   console.log("event");
@@ -50,48 +78,46 @@ exports.connectionHandler = async (event) => {
     console.log(routeKey);
     switch (routeKey) {
       case "$connect":
-        break;
-      // case "test":
-      //   await send(connectionId, {
-      //     message: `This response was pushed through Lambda by the user: ${body?.name}. To the user with connectionId: ${connectionId}`,
-      //   });
-      //   break;
-      // case "checkOverlayCookieId":
-      //   console.log("JSON.stringify(body)");
-      //   console.log(JSON.stringify(body));
-      //   // if (body?.overlayIdCookieKey) {
-      //   //   const overlayIdCookieKey = body?.overlayIdCookieKey;
-      //   //   await docClient
-      //   //     .get(
-      //   //       { TableName: tableName, Key: { id: overlayIdCookieKey } },
-      //   //       async function (err, data) {
-      //   //         if (err) {
-      //   //           console.log(err);
-      //   //           await send({
-      //   //             connectionId,
-      //   //             message: `An error occurred: \n ${err}`,
-      //   //           });
-      //   //         } else {
-      //   //           console.log(data);
-      //   //           await send({
-      //   //             connectionId,
-      //   //             message: `Success in getting item from DynamoDB: \n ${data}`,
-      //   //           });
-      //   //         }
-      //   //       }
-      //   //     )
-      //   //     .promise();
-      //   // }
-      //   // await docClient
-      //   //   .put({
-      //   //     TableName: tableName,
-      //   //     Item: {
-      //   //       id: connectionId,
-      //   //       name: connectionId,
-      //   //     },
-      //   //   })
-      //   //   .promise();
-      //   break;
+        const response = {
+          isBase64Encoded: false,
+          statusCode: 200,
+          body: "",
+        };
+
+        return response;
+      case "$disconnect":
+        try {
+          return scanConnectionsTable(
+            "currentConnectionId = :currentConnectionId",
+            { ":currentConnectionId": connectionId }
+          ).then((data) => {
+            const id = data?.Items[0]?.id;
+            return updateConnectionsTable(
+              id,
+              "set currentlyConnected = :currentlyConnected, currentConnectionId = :currentConnectionId",
+              {
+                ":currentConnectionId": "",
+                ":currentlyConnected": false,
+              }
+            ).then(() => {
+              const response = {
+                isBase64Encoded: false,
+                statusCode: 200,
+                body: "",
+              };
+
+              return response;
+            });
+          });
+        } catch (error) {
+          const response = {
+            isBase64Encoded: false,
+            statusCode: 400,
+            body: ("An error occured", error),
+          };
+
+          return response;
+        }
       case "sendToAllUsers":
         break;
 
@@ -99,13 +125,6 @@ exports.connectionHandler = async (event) => {
         break;
     }
   }
-  const response = {
-    isBase64Encoded: false,
-    statusCode: 200,
-    body: "",
-  };
-
-  return response;
 
   // Creates a new item, or replaces an old item with a new item
   // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#put-property

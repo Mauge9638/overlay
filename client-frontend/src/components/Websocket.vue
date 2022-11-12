@@ -183,12 +183,12 @@ webSocketConnection.onmessage = (event) => {
   inputMessage.value = JSON.parse(event.data).message;
 };
 
-const sendMessage = () => {
+const sendMessage = async () => {
   console.log(outputMessage.value);
-  checkOverlayCookieIdValidity();
-  /*   webSocketConnection.send(
+  //checkOverlayCookieIdValidity();
+  webSocketConnection.send(
     `{ "action": "test", "name": "${outputMessage.value}"}`
-  ); */
+  );
 };
 </script>
 
