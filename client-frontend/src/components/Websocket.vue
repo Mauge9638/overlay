@@ -158,13 +158,7 @@ webSocketConnection.onopen = async (event) => {
   console.log(event);
   connectionStatus.value = event.type;
   connectionIsOpen.value = true;
-  // setInterval(() => {
-  //   checkOverlayCookieIdValidity();
-  // }, 4000);
   checkOverlayCookieIdValidity();
-  // webSocketConnection.send(
-  //   `{ "action": "checkOverlayCookieId", "overlayIdCookieKey": "${testCookie}"}`
-  // );
 };
 webSocketConnection.onerror = (event) => {
   console.log("onerror");

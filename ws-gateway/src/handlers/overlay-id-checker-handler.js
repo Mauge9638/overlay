@@ -2,7 +2,7 @@ const aws = require("aws-sdk");
 const crypto = require("crypto");
 // const dynamodb = require("aws-sdk/clients/dynamodb");
 const docClient = new aws.DynamoDB.DocumentClient();
-const tableName = process.env.CONNECTIONS_TABLE;
+const connectionsTable = process.env.CONNECTIONS_TABLE;
 
 const getSocketContext = (event) => {
   const { domainName, stage, connectionId, routeKey } = event.requestContext;
@@ -31,7 +31,7 @@ const getSocketContext = (event) => {
 const checkConnectionsTable = async (value) => {
   return docClient
     .get({
-      TableName: tableName,
+      TableName: connectionsTable,
       Key: { id: value },
     })
     .promise();
@@ -40,7 +40,7 @@ const checkConnectionsTable = async (value) => {
 const addToConnectionsTable = async (idValue, connectionValue) => {
   return docClient
     .put({
-      TableName: tableName,
+      TableName: connectionsTable,
       Item: {
         id: idValue,
         currentConnectionId: connectionValue,
@@ -66,7 +66,7 @@ const updateConnectionsTable = async (
 ) => {
   return docClient
     .update({
-      TableName: tableName,
+      TableName: connectionsTable,
       Key: { id: idValue },
       UpdateExpression: UpdateExpression,
       ExpressionAttributeValues: ExpressionAttributeValues,
@@ -80,7 +80,7 @@ const scanConnectionsTable = async (
 ) => {
   return docClient
     .scan({
-      TableName: tableName,
+      TableName: connectionsTable,
       FilterExpression: FilterExpression,
       ExpressionAttributeValues: ExpressionAttributeValues,
     })
