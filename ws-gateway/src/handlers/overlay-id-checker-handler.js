@@ -3,6 +3,7 @@ const crypto = require("crypto");
 // const dynamodb = require("aws-sdk/clients/dynamodb");
 const docClient = new aws.DynamoDB.DocumentClient();
 const connectionsTable = process.env.CONNECTIONS_TABLE;
+const overlayTable = process.env.OVERLAY_TABLE;
 
 const getSocketContext = (event) => {
   const { domainName, stage, connectionId, routeKey } = event.requestContext;
@@ -45,14 +46,10 @@ const addToConnectionsTable = async (idValue, connectionValue) => {
         id: idValue,
         currentConnectionId: connectionValue,
         currentlyConnected: true,
-        overlays: {
-          overlay1: {
-            a71yP3dJbmaFfsMra7TR: { answered: true },
-            YwfJuyDsRtpQQxduab8c: { answered: false },
-            EFryiW2ZMUxb_InlnkrP: { answered: false },
-          },
-          overlay2: { key1: "yes", key2: "no", key3: true },
-          overlay3: { key1: "yes", key2: "no", key3: true },
+        testValue: {
+          key1: "123123",
+          key2: 129312,
+          objects: { key1: "yes", key2: "no", key3: true },
         },
       },
     })
@@ -69,19 +66,6 @@ const updateConnectionsTable = async (
       TableName: connectionsTable,
       Key: { id: idValue },
       UpdateExpression: UpdateExpression,
-      ExpressionAttributeValues: ExpressionAttributeValues,
-    })
-    .promise();
-};
-
-const scanConnectionsTable = async (
-  FilterExpression,
-  ExpressionAttributeValues
-) => {
-  return docClient
-    .scan({
-      TableName: connectionsTable,
-      FilterExpression: FilterExpression,
       ExpressionAttributeValues: ExpressionAttributeValues,
     })
     .promise();
@@ -105,6 +89,7 @@ exports.overlayIdCheckerHandler = async (event) => {
     switch (routeKey) {
       case "test":
         return send(connectionId, {
+          subject: "test",
           message: `This response was pushed through Lambda by the user: ${body?.name}. To the user with connectionId: ${connectionId}`,
         })
           .then(() => {
@@ -113,9 +98,10 @@ exports.overlayIdCheckerHandler = async (event) => {
           .then(() => {
             const response = {
               isBase64Encoded: false,
-              statusCode: 400,
+              statusCode: 200,
               body: "",
             };
+
             return response;
           });
       case "checkOverlayCookieId":
@@ -132,6 +118,7 @@ exports.overlayIdCheckerHandler = async (event) => {
                   )
                     .then(() => {
                       return send(connectionId, {
+                        subject: "checkOverlayCookieId",
                         newOverlayIdCookieKey: newOverlayIdCookieKey,
                       });
                     })
@@ -141,13 +128,13 @@ exports.overlayIdCheckerHandler = async (event) => {
                 } else {
                   return updateConnectionsTable(
                     overlayIdCookieKey,
-                    "set currentlyConnected = :currentlyConnected, currentConnectionId = :currentConnectionId",
+                    "set currentlyConnected = :currentlyConnected",
                     {
-                      ":currentConnectionId": connectionId,
                       ":currentlyConnected": true,
                     }
                   ).then(() => {
                     return send(connectionId, {
+                      subject: "checkOverlayCookieId",
                       message: "overlayCookieId exists in db",
                     }).then(() => {
                       return Promise.resolve();
@@ -156,16 +143,6 @@ exports.overlayIdCheckerHandler = async (event) => {
                 }
               })
               .then(() => {
-                console.log("Scan on table");
-                return scanConnectionsTable(
-                  "currentlyConnected = :currentlyConnected",
-                  {
-                    ":currentlyConnected": true,
-                  }
-                );
-              })
-              .then((data) => {
-                console.log(data);
                 const response = {
                   isBase64Encoded: false,
                   statusCode: 200,
@@ -183,8 +160,7 @@ exports.overlayIdCheckerHandler = async (event) => {
                 };
 
                 return response;
-              })
-              .finally(() => {});
+              });
           } catch (err) {
             const response = {
               isBase64Encoded: false,
@@ -193,13 +169,45 @@ exports.overlayIdCheckerHandler = async (event) => {
             };
             return response;
           }
+        } else if (body?.overlayIdCookieKey == "") {
+          try {
+            const newOverlayIdCookieKey = crypto.randomUUID();
+            return addToConnectionsTable(newOverlayIdCookieKey, connectionId)
+              .then(() => {
+                return send(connectionId, {
+                  subject: "checkOverlayCookieId",
+                  newOverlayIdCookieKey: newOverlayIdCookieKey,
+                });
+              })
+              .then(() => {
+                return Promise.resolve();
+              })
+              .then(() => {
+                const response = {
+                  isBase64Encoded: false,
+                  statusCode: 200,
+                  body: "",
+                };
+
+                return response;
+              });
+          } catch (err) {
+            const response = {
+              isBase64Encoded: false,
+              statusCode: 400,
+              body: `An error occured: ${err}`,
+            };
+            return response;
+          }
         }
         break;
-      case "sendToAllUsers":
-        break;
-
       default:
-        break;
+        const response = {
+          isBase64Encoded: false,
+          statusCode: 400,
+          body: "",
+        };
+        return response;
     }
   }
   // const response = {

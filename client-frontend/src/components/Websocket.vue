@@ -110,80 +110,80 @@ onMounted(() => {
     .appendChild(overlay2); */
 });
 
-webSocketConnection = new WebSocket(
-  "wss://sonim20w02.execute-api.eu-central-1.amazonaws.com/v1"
-);
 // webSocketConnection = new WebSocket(
-//   "wss://virkerikkelooller.execute-api.eu-central-1.amazonaws.com/v1"
+//   "wss://sonim20w02.execute-api.eu-central-1.amazonaws.com/v1"
 // );
+// // webSocketConnection = new WebSocket(
+// //   "wss://virkerikkelooller.execute-api.eu-central-1.amazonaws.com/v1"
+// // );
 
-const getCookie = (cookieName: string): string => {
-  const name = cookieName + "=";
-  const cookies = document.cookie.split(";");
-  for (let i = 0; i < cookies.length; i++) {
-    let currentCookie = cookies[i];
-    while (currentCookie.charAt(0) == " ") {
-      currentCookie = currentCookie.substring(1);
-    }
-    if (currentCookie.indexOf(name) == 0) {
-      return currentCookie.substring(name.length, currentCookie.length);
-    }
-  }
-  return "";
-};
+// const getCookie = (cookieName: string): string => {
+//   const name = cookieName + "=";
+//   const cookies = document.cookie.split(";");
+//   for (let i = 0; i < cookies.length; i++) {
+//     let currentCookie = cookies[i];
+//     while (currentCookie.charAt(0) == " ") {
+//       currentCookie = currentCookie.substring(1);
+//     }
+//     if (currentCookie.indexOf(name) == 0) {
+//       return currentCookie.substring(name.length, currentCookie.length);
+//     }
+//   }
+//   return "";
+// };
 
-const setCookie = (
-  cookieName: string,
-  cookieValue: string,
-  existDays: number
-) => {
-  const expiryDate = new Date();
-  expiryDate.setTime(expiryDate.getTime() + existDays * 24 * 60 * 60 * 1000);
-  let expires = "expires=" + expiryDate.toUTCString();
-  document.cookie = cookieName + "=" + cookieValue + ";" + expires + ";path=/";
-};
+// const setCookie = (
+//   cookieName: string,
+//   cookieValue: string,
+//   existDays: number
+// ) => {
+//   const expiryDate = new Date();
+//   expiryDate.setTime(expiryDate.getTime() + existDays * 24 * 60 * 60 * 1000);
+//   let expires = "expires=" + expiryDate.toUTCString();
+//   document.cookie = cookieName + "=" + cookieValue + ";" + expires + ";path=/";
+// };
 
-const checkOverlayCookieIdValidity = () => {
-  console.log("Getting cookie with the name: overlayIdCookieKey");
-  const overlayIdCookieKey = getCookie("overlayIdCookieKey");
-  console.log("overlayIdCookieKey:", overlayIdCookieKey);
-  console.log("Checking for validity");
-  webSocketConnection.send(
-    `{ "action": "checkOverlayCookieId", "overlayIdCookieKey": "${overlayIdCookieKey}"}`
-  );
-};
+// const checkOverlayCookieIdValidity = () => {
+//   console.log("Getting cookie with the name: overlayIdCookieKey");
+//   const overlayIdCookieKey = getCookie("overlayIdCookieKey");
+//   console.log("overlayIdCookieKey:", overlayIdCookieKey);
+//   console.log("Checking for validity");
+//   webSocketConnection.send(
+//     `{ "action": "checkOverlayCookieId", "overlayIdCookieKey": "${overlayIdCookieKey}"}`
+//   );
+// };
 
-webSocketConnection.onopen = async (event) => {
-  console.log("onopen");
-  console.log(event);
-  connectionStatus.value = event.type;
-  connectionIsOpen.value = true;
-  checkOverlayCookieIdValidity();
-};
-webSocketConnection.onerror = (event) => {
-  console.log("onerror");
-  console.log(event);
-  connectionStatus.value = event.type;
-  connectionIsOpen.value = true;
-};
-webSocketConnection.onmessage = (event) => {
-  console.log("onmessage");
-  console.log(event);
-  console.log(event.data);
-  if (JSON.parse(event.data)?.newOverlayIdCookieKey) {
-    const newOverlayIdCookieKey = JSON.parse(event.data)?.newOverlayIdCookieKey;
-    setCookie("overlayIdCookieKey", newOverlayIdCookieKey, 365);
-  }
-  inputMessage.value = JSON.parse(event.data).message;
-};
+// webSocketConnection.onopen = async (event) => {
+//   console.log("onopen");
+//   console.log(event);
+//   connectionStatus.value = event.type;
+//   connectionIsOpen.value = true;
+//   checkOverlayCookieIdValidity();
+// };
+// webSocketConnection.onerror = (event) => {
+//   console.log("onerror");
+//   console.log(event);
+//   connectionStatus.value = event.type;
+//   connectionIsOpen.value = true;
+// };
+// webSocketConnection.onmessage = (event) => {
+//   console.log("onmessage");
+//   console.log(event);
+//   console.log(event.data);
+//   if (JSON.parse(event.data)?.newOverlayIdCookieKey) {
+//     const newOverlayIdCookieKey = JSON.parse(event.data)?.newOverlayIdCookieKey;
+//     setCookie("overlayIdCookieKey", newOverlayIdCookieKey, 365);
+//   }
+//   inputMessage.value = JSON.parse(event.data).message;
+// };
 
-const sendMessage = async () => {
-  console.log(outputMessage.value);
-  //checkOverlayCookieIdValidity();
-  webSocketConnection.send(
-    `{ "action": "test", "name": "${outputMessage.value}"}`
-  );
-};
+// const sendMessage = async () => {
+//   console.log(outputMessage.value);
+//   //checkOverlayCookieIdValidity();
+//   webSocketConnection.send(
+//     `{ "action": "test", "name": "${outputMessage.value}"}`
+//   );
+// };
 </script>
 
 <style>

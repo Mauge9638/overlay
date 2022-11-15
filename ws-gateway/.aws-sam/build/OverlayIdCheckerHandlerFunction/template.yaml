@@ -1,6 +1,10 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
+# Package:
+#   exclude:
+#     - node_modules/**
+
 Resources:
   # LambdaRequestAuthFunction:
   #   Type: AWS::Serverless::Function
@@ -32,6 +36,18 @@ Resources:
   #       - AmazonAPIGatewayInvokeFullAccess
   #       - AmazonAPIGatewayAdministrator
 
+  # Dependencies:
+  #   Type: AWS::Serverless::LayerVersion
+  #   Properties:
+  #     LayerName: NodeDependencies
+  #     Description: Dependencies
+  #     ContentUri: ./*.json
+  #     CompatibleRuntimes:
+  #       - nodejs16.x
+  #     RetentionPolicy: Retain
+  #   Metadata:
+  #     BuildMethod: nodejs16.x
+
   ConnectionHandlerFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -56,6 +72,29 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: src/handlers/overlay-id-checker-handler.overlayIdCheckerHandler
+      Timeout: 30
+      Runtime: nodejs16.x
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          CONNECTIONS_TABLE: !Ref ConnectionsTable
+          OVERLAY_TABLE: !Ref OverlayTable
+      # CodeUri: ./
+      Policies:
+        - AWSLambda_FullAccess
+        - CloudWatchLogsFullAccess
+        - AmazonAPIGatewayInvokeFullAccess
+        - AmazonAPIGatewayAdministrator
+        - AmazonDynamoDBFullAccess
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConnectionsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OverlayTable
+
+  OverlayHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/overlay-handler.overlayHandler
       Timeout: 30
       Runtime: nodejs16.x
       Environment:
@@ -135,6 +174,46 @@ Resources:
       IntegrationUri:
         Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayIdCheckerHandlerFunction.Arn}/invocations
 
+  GetOverlaysRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MyWebSocketApi
+      RouteKey: "getOverlays"
+      OperationName: GetOverlaysRoute
+      Target: !Join
+        - "/"
+        - - "integrations"
+          - !Ref OverlayHandlerLambdaIntegration
+
+  OverlayHandlerLambdaIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MyWebSocketApi
+      Description: OverlayHandler Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayHandlerFunction.Arn}/invocations
+
+  AddOverlayRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MyWebSocketApi
+      RouteKey: "addOverlay"
+      OperationName: AddOverlayRoute
+      Target: !Join
+        - "/"
+        - - "integrations"
+          - !Ref OverlayHandlerLambdaIntegration
+
+  # OverlayHandlerLambdaIntegration:
+  #   Type: AWS::ApiGatewayV2::Integration
+  #   Properties:
+  #     ApiId: !Ref MyWebSocketApi
+  #     Description: OverlayHandler Integration
+  #     IntegrationType: AWS_PROXY
+  #     IntegrationUri:
+  #       Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayHandlerFunction.Arn}/invocations
+
   # Auth:
   #   Type: "AWS::ApiGatewayV2::Authorizer"
   #   Properties:
@@ -174,6 +253,16 @@ Resources:
       FunctionName: !Ref OverlayIdCheckerHandlerFunction
       Principal: apigateway.amazonaws.com
 
+  OverlayHandlerFunctionPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - MyWebSocketApi
+      - OverlayHandlerFunction
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref OverlayHandlerFunction
+      Principal: apigateway.amazonaws.com
+
   ConnectionsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -207,6 +296,8 @@ Resources:
     DependsOn:
       - TestRoute
       - CheckOverlayCookieIdRoute
+      - GetOverlaysRoute
+      - AddOverlayRoute
       - ConnectRoute
     Properties:
       ApiId: !Ref MyWebSocketApi

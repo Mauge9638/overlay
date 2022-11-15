@@ -1,7 +1,7 @@
 const aws = require("aws-sdk");
 // const dynamodb = require("aws-sdk/clients/dynamodb");
 const docClient = new aws.DynamoDB.DocumentClient();
-const tableName = process.env.CONNECTIONS_TABLE;
+const connectionsTable = process.env.CONNECTIONS_TABLE;
 
 const getSocketContext = (event) => {
   const { domainName, stage, connectionId, routeKey } = event.requestContext;
@@ -34,7 +34,7 @@ const updateConnectionsTable = async (
 ) => {
   return docClient
     .update({
-      TableName: tableName,
+      TableName: connectionsTable,
       Key: { id: idValue },
       UpdateExpression: UpdateExpression,
       ExpressionAttributeValues: ExpressionAttributeValues,
@@ -48,7 +48,7 @@ const scanConnectionsTable = async (
 ) => {
   return docClient
     .scan({
-      TableName: tableName,
+      TableName: connectionsTable,
       FilterExpression: FilterExpression,
       ExpressionAttributeValues: ExpressionAttributeValues,
     })
@@ -118,11 +118,6 @@ exports.connectionHandler = async (event) => {
 
           return response;
         }
-      case "sendToAllUsers":
-        break;
-
-      default:
-        break;
     }
   }
 

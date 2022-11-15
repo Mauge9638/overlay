@@ -25,3 +25,7 @@ The **test** route handler is defined in the `index.js` file.
 The **Request Authorizer** is in the `authorizer.js` file.
 
 The **SAM Template** is the `template.yaml` file.
+
+# Check
+
+https://www.closeit.co/closeit-blog/starting-aws-sam-folder-structure-nodejs
