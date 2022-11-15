@@ -1,10 +1,14 @@
 <template>
-  <div :class="`overlay-container invisible`">
+  <!--  <div :class="`overlay-container invisible`"> -->
+  <div :class="`overlay-container`">
     <div>
-      <h1 v-if="overlayChosen">
-        {{ overlays[overlayChosenPropRef]?.question }}
+      <h1 v-if="overlayChosenRef">
+        {{ overlays[overlayChosenRef]?.overlayContent[0]?.props.title }}
       </h1>
-      <div v-for="option in overlays[overlayChosenPropRef]?.options">
+      <div
+        v-for="option in overlays[overlayChosenRef]?.overlayContent[0]?.props
+          ?.options"
+      >
         <input
           v-model="overlayAnswerRef"
           :id="option.value"
@@ -14,8 +18,8 @@
         <label :for="option.value">{{ option.label }}</label
         ><br />
       </div>
-      <button @click="sendAnswer">Send svar</button>
     </div>
+    <button @click="sendAnswer">Send svar</button>
   </div>
   <!--  <div v-else-if="!overlayChosen" class="invisible"></div> -->
 </template>
@@ -25,18 +29,13 @@ import { onMounted, ref, toRef, watch } from "vue";
 const props = defineProps({
   options: Object,
   title: String,
-  overlayChosen: Number,
   desiredOverlayId: String,
 });
 const optionPropRef = toRef(props, "options");
 const titlePropRef = toRef(props, "title");
-const overlayChosenPropRef = toRef(props, "overlayChosen");
 const desiredOverlayIdPropRef = toRef(props, "desiredOverlayId");
-const test = () => {
-  console.log("test");
-};
 
-const overlays = {
+/* const overlays = {
   a71yP3dJbmaFfsMra7TR: {
     question: "What do u think?",
     options: [
@@ -75,26 +74,30 @@ const overlays = {
       { label: "durian", value: "durian" },
     ],
   },
-};
+}; */
 
-const overlay = ref({});
+const overlayChosenRef = ref("");
+const overlays = ref({});
 
 let webSocketConnection: WebSocket;
 
 const overlayAnswerRef = ref("");
 
-watch(overlayChosenPropRef, () => {
+watch(overlayChosenRef, () => {
   document
     .getElementsByClassName(`overlay-container`)[0]
     .classList.remove("invisible");
 });
 const sendAnswer = () => {
+  overlayChosenRef.value = "5aj0s05sjj05aj0sa95";
+};
+/* const sendAnswer = () => {
   console.log(overlayAnswerRef.value);
   document
     .getElementsByClassName(`overlay-container`)[0]
     .classList.add("invisible");
   overlayAnswerRef.value = "";
-};
+}; */
 
 webSocketConnection = new WebSocket(
   "wss://sonim20w02.execute-api.eu-central-1.amazonaws.com/v1"
@@ -143,8 +146,9 @@ const onMessageCheckOverlayCookieIdHandler = async (parsedData: Object) => {
   return new Promise((resolve, reject) => {
     try {
       console.log(parsedData);
-      if (parsedData?.newOverlayIdCookieKey) {
-        const newOverlayIdCookieKey = parsedData?.newOverlayIdCookieKey;
+      if (parsedData?.content) {
+        const newOverlayIdCookieKey =
+          parsedData?.content?.newOverlayIdCookieKey;
         setCookie("overlayIdCookieKey", newOverlayIdCookieKey, 365);
         resolve(`Cookie set to: ${newOverlayIdCookieKey}`);
       } else if (parsedData?.message) {
@@ -178,15 +182,28 @@ webSocketConnection.onmessage = async (event) => {
         })
         .then((data) => {
           console.log(data);
+          if (desiredOverlayIdPropRef.value != "") {
+            webSocketConnection.send(
+              `{ "action": "getOverlayContent", "desiredOverlayId": "${desiredOverlayIdPropRef.value}"}`
+            );
+          }
         });
     } catch (err) {
       console.log(err);
     }
+  } else if (
+    parsedData?.subject == "getOverlayContent" &&
+    parsedData?.content
+  ) {
+    const overlayContent = parsedData?.content?.overlayContent;
+    overlays.value = {
+      [overlayContent?.Item?.id]: {
+        broadcastTitle: overlayContent.Item.broadcastTitle,
+        overlayContent: overlayContent.Item.overlayContent,
+      },
+    };
+    console.log(overlays.value);
   }
-};
-
-const sendMessage = async () => {
-  //checkOverlayCookieIdValidity();
 };
 
 onMounted(() => {

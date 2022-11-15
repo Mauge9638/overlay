@@ -205,6 +205,17 @@ Resources:
         - - "integrations"
           - !Ref OverlayHandlerLambdaIntegration
 
+  GetOverlayContentRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MyWebSocketApi
+      RouteKey: "getOverlayContent"
+      OperationName: GetOverlayContentRoute
+      Target: !Join
+        - "/"
+        - - "integrations"
+          - !Ref OverlayHandlerLambdaIntegration
+
   # OverlayHandlerLambdaIntegration:
   #   Type: AWS::ApiGatewayV2::Integration
   #   Properties:
@@ -298,6 +309,7 @@ Resources:
       - CheckOverlayCookieIdRoute
       - GetOverlaysRoute
       - AddOverlayRoute
+      - GetOverlayContentRoute
       - ConnectRoute
     Properties:
       ApiId: !Ref MyWebSocketApi

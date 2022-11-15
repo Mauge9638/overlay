@@ -29,7 +29,7 @@ const getSocketContext = (event) => {
   return { connectionId, endpoint, send, routeKey };
 };
 
-const checkConnectionsTable = async (value) => {
+const getConnectionsTableItem = async (value) => {
   return docClient
     .get({
       TableName: connectionsTable,
@@ -108,7 +108,7 @@ exports.overlayIdCheckerHandler = async (event) => {
         if (body?.overlayIdCookieKey) {
           const overlayIdCookieKey = body?.overlayIdCookieKey;
           try {
-            return checkConnectionsTable(overlayIdCookieKey)
+            return getConnectionsTableItem(overlayIdCookieKey)
               .then((data) => {
                 if (Object.keys(data).length <= 0) {
                   const newOverlayIdCookieKey = crypto.randomUUID();
@@ -119,7 +119,9 @@ exports.overlayIdCheckerHandler = async (event) => {
                     .then(() => {
                       return send(connectionId, {
                         subject: "checkOverlayCookieId",
-                        newOverlayIdCookieKey: newOverlayIdCookieKey,
+                        content: {
+                          newOverlayIdCookieKey: newOverlayIdCookieKey,
+                        },
                       });
                     })
                     .then(() => {
@@ -176,7 +178,7 @@ exports.overlayIdCheckerHandler = async (event) => {
               .then(() => {
                 return send(connectionId, {
                   subject: "checkOverlayCookieId",
-                  newOverlayIdCookieKey: newOverlayIdCookieKey,
+                  content: { newOverlayIdCookieKey: newOverlayIdCookieKey },
                 });
               })
               .then(() => {

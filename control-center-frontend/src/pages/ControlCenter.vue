@@ -111,8 +111,8 @@ webSocketConnection.onmessage = (event) => {
   console.log(event.data);
   const parsedData = JSON.parse(event.data);
   console.log(parsedData);
-  if (parsedData?.overlays) {
-    overlaysFromAWSOverlayTable.value = parsedData.overlays.Items;
+  if (parsedData?.content?.overlays) {
+    overlaysFromAWSOverlayTable.value = parsedData.content.overlays.Items;
     console.log(overlaysFromAWSOverlayTable.value);
   }
 };

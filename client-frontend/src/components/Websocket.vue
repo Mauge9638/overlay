@@ -37,12 +37,12 @@
       <Overlay
         class="overlay"
         :options="overlayOptions"
-        :overlay-chosen="overlaySelectorRef"
+        desired-overlay-id="5aj0s05sjj05aj0sa95"
       />
       <Overlay
         class="overlay2"
         :options="overlayOptions"
-        :overlay-chosen="overlaySelectorRef"
+        desired-overlay-id=""
       />
       <div class="videoJsPlayer">
         <VideoJSComponent

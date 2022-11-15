@@ -73,6 +73,15 @@ const addToOverlayTable = async (idValue, broadcastTitle, overlayContent) => {
     .promise();
 };
 
+const getOverlayTableItem = async (value) => {
+  return docClient
+    .get({
+      TableName: overlayTable,
+      Key: { id: value },
+    })
+    .promise();
+};
+
 exports.overlayHandler = async (event) => {
   console.log(JSON.stringify(event, 2));
   console.log("event");
@@ -102,7 +111,9 @@ exports.overlayHandler = async (event) => {
               console.log(data);
               return send(connectionId, {
                 subject: "getOverlays",
-                overlays: data,
+                content: {
+                  overlays: data,
+                },
               });
             })
             .then(() => {
@@ -164,7 +175,7 @@ exports.overlayHandler = async (event) => {
           try {
             return send(connectionId, {
               subject: "addOverlay",
-              message: "idValue & broadcastTitle & overlayContent is required",
+              message: "idValue, broadcastTitle & overlayContent is required",
             }).then(() => {
               return Promise.resolve();
             });
@@ -177,6 +188,57 @@ exports.overlayHandler = async (event) => {
 
             return response;
           }
+        }
+      case "getOverlayContent":
+        try {
+          if (body?.desiredOverlayId) {
+            const desiredOverlayId = body?.desiredOverlayId;
+            return getOverlayTableItem(desiredOverlayId).then((data) => {
+              return send(connectionId, {
+                subject: "getOverlayContent",
+                content: {
+                  overlayContent: data,
+                },
+              })
+                .then(() => {
+                  return Promise.resolve();
+                })
+                .then(() => {
+                  const response = {
+                    isBase64Encoded: false,
+                    statusCode: 200,
+                    body: "Success in executing action",
+                  };
+
+                  return response;
+                });
+            });
+          } else {
+            return send(connectionId, {
+              subject: "getOverlayContent",
+              message: "The action must contain <'desiredOverlayId': 'String'>",
+            })
+              .then(() => {
+                return Promise.resolve();
+              })
+              .then(() => {
+                const response = {
+                  isBase64Encoded: false,
+                  statusCode: 400,
+                  body: "Missing content in body",
+                };
+
+                return response;
+              });
+          }
+        } catch (err) {
+          const response = {
+            isBase64Encoded: false,
+            statusCode: 400,
+            body: `An error occured: ${err}`,
+          };
+
+          return response;
         }
       case "sendToAllUsers":
         break;

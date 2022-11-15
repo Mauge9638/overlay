@@ -3,29 +3,56 @@
     "broadcastTitle": "Some broadcast about animals",
     "overlayContent": [
       {
-        "overlayId": "as598ahs9tasng9an!",
+        "overlayContentId": "as598ahs9tasng9an!",
         "componentName": "OverlaySelect",
         "props": {
           "title": "What are you?",
           "options": [
-            { "label": "yes", "value": "yes" },
-            { "label": "no", "value": "no" },
-            { "label": "mby", "value": "mby" },
-            { "label": "idk", "value": "idk" }
+            {
+              "label": "yes",
+              "value": "yes"
+            },
+            {
+              "label": "no",
+              "value": "no"
+            },
+            {
+              "label": "mby",
+              "value": "mby"
+            },
+            {
+              "label": "idk",
+              "value": "idk"
+            }
           ]
         }
       },
       {
-        "overlayId": "as598ahs9tasng9an!",
+        "overlayContentId": "as598ahs9tasng9an!",
         "componentName": "OverlaySelect",
         "props": {
           "title": "Favourite animal",
           "options": [
-            { "label": "dog", "value": "dog" },
-            { "label": "cat", "value": "cat" },
-            { "label": "cow", "value": "cow" },
-            { "label": "rabbit", "value": "rabbit" },
-            { "label": "horse", "value": "horse" }
+            {
+              "label": "dog",
+              "value": "dog"
+            },
+            {
+              "label": "cat",
+              "value": "cat"
+            },
+            {
+              "label": "cow",
+              "value": "cow"
+            },
+            {
+              "label": "rabbit",
+              "value": "rabbit"
+            },
+            {
+              "label": "horse",
+              "value": "horse"
+            }
           ]
         }
       }
@@ -36,15 +63,27 @@
     "broadcastTitle": "Some broadcast about colors",
     "overlayContent": [
       {
-        "overlayId": "aw5+jas0otnast!",
+        "overlayContentId": "aw5+jas0otnast!",
         "componentName": "OverlaySelect",
         "props": {
           "title": "Favourite color?",
           "options": [
-            { "label": "black", "value": "black" },
-            { "label": "red", "value": "red" },
-            { "label": "blue", "value": "blue" },
-            { "label": "white", "value": "white" }
+            {
+              "label": "black",
+              "value": "black"
+            },
+            {
+              "label": "red",
+              "value": "red"
+            },
+            {
+              "label": "blue",
+              "value": "blue"
+            },
+            {
+              "label": "white",
+              "value": "white"
+            }
           ]
         }
       }
@@ -55,17 +94,35 @@
     "broadcastTitle": "Some broadcast about fruit",
     "overlayContent": [
       {
-        "overlayId": "089ha09sh560as90!",
+        "overlayContentId": "089ha09sh560as90!",
         "componentName": "OverlaySelect",
         "props": {
           "title": "Least liked fruit?",
           "options": [
-            { "label": "apple", "value": "apple" },
-            { "label": "pear", "value": "pear" },
-            { "label": "orange", "value": "orange" },
-            { "label": "banana", "value": "banana" },
-            { "label": "strawberry", "value": "strawberry" },
-            { "label": "durian", "value": "durian" }
+            {
+              "label": "apple",
+              "value": "apple"
+            },
+            {
+              "label": "pear",
+              "value": "pear"
+            },
+            {
+              "label": "orange",
+              "value": "orange"
+            },
+            {
+              "label": "banana",
+              "value": "banana"
+            },
+            {
+              "label": "strawberry",
+              "value": "strawberry"
+            },
+            {
+              "label": "durian",
+              "value": "durian"
+            }
           ]
         }
       }
