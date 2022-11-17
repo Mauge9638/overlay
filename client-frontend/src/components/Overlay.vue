@@ -1,13 +1,17 @@
 <template>
   <!--  <div :class="`overlay-container invisible`"> -->
-  <div :class="`overlay-container`">
+  <div :class="`overlay-container invisible`">
     <div>
       <h1 v-if="overlayChosenRef">
-        {{ overlays[overlayChosenRef]?.overlayContent[0]?.props.title }}
+        {{
+          overlays[desiredOverlayIdPropRef]?.overlayContent[overlayChosenRef]
+            ?.props.title
+        }}
       </h1>
       <div
-        v-for="option in overlays[overlayChosenRef]?.overlayContent[0]?.props
-          ?.options"
+        v-for="option in overlays[desiredOverlayIdPropRef]?.overlayContent[
+          overlayChosenRef
+        ]?.props?.options"
       >
         <input
           v-model="overlayAnswerRef"
@@ -35,47 +39,6 @@ const optionPropRef = toRef(props, "options");
 const titlePropRef = toRef(props, "title");
 const desiredOverlayIdPropRef = toRef(props, "desiredOverlayId");
 
-/* const overlays = {
-  a71yP3dJbmaFfsMra7TR: {
-    question: "What do u think?",
-    options: [
-      { label: "yes", value: "yes" },
-      { label: "no", value: "no" },
-      { label: "mby", value: "mby" },
-      { label: "idk", value: "idk" },
-    ],
-  },
-  YwfJuyDsRtpQQxduab8c: {
-    question: "Favourite animal",
-    options: [
-      { label: "dog", value: "dog" },
-      { label: "cat", value: "cat" },
-      { label: "cow", value: "cow" },
-      { label: "rabbit", value: "rabbit" },
-    ],
-  },
-  EFryiW2ZMUxb_InlnkrP: {
-    question: "Favourite color?",
-    options: [
-      { label: "black", value: "black" },
-      { label: "red", value: "red" },
-      { label: "blue", value: "blue" },
-      { label: "white", value: "white" },
-    ],
-  },
-  owGrQoXqtS2JKVoA1eMK: {
-    question: "Least liked fruit?",
-    options: [
-      { label: "apple", value: "apple" },
-      { label: "pear", value: "pear" },
-      { label: "orange", value: "orange" },
-      { label: "banana", value: "banana" },
-      { label: "strawberry", value: "strawberry" },
-      { label: "durian", value: "durian" },
-    ],
-  },
-}; */
-
 const overlayChosenRef = ref("");
 const overlays = ref({});
 
@@ -88,16 +51,28 @@ watch(overlayChosenRef, () => {
     .getElementsByClassName(`overlay-container`)[0]
     .classList.remove("invisible");
 });
+// const sendAnswer = () => {
+//   console.log(overlays.value);
+//   console.log(overlays.value?.[desiredOverlayIdPropRef.value].broadcastTitle);
+//   // overlayChosenRef.value = "5aj0s05sjj05aj0sa95";
+// };
 const sendAnswer = () => {
-  overlayChosenRef.value = "5aj0s05sjj05aj0sa95";
-};
-/* const sendAnswer = () => {
   console.log(overlayAnswerRef.value);
   document
     .getElementsByClassName(`overlay-container`)[0]
     .classList.add("invisible");
+  webSocketConnection.send(
+    JSON.stringify({
+      action: "sendAnswerToOverlayContent",
+      content: {
+        overlayId: desiredOverlayIdPropRef.value,
+        overlayContentId: overlayChosenRef.value,
+        answer: overlayAnswerRef.value,
+      },
+    })
+  );
   overlayAnswerRef.value = "";
-}; */
+};
 
 webSocketConnection = new WebSocket(
   "wss://sonim20w02.execute-api.eu-central-1.amazonaws.com/v1"
@@ -138,7 +113,13 @@ const checkOverlayCookieIdValidity = async () => {
   console.log("overlayIdCookieKey:", overlayIdCookieKey);
   console.log("Checking for validity");
   webSocketConnection.send(
-    `{ "action": "checkOverlayCookieId", "overlayIdCookieKey": "${overlayIdCookieKey}"}`
+    JSON.stringify({
+      action: "checkOverlayCookieId",
+      content: {
+        overlayIdCookieKey: overlayIdCookieKey,
+        connectedToOverlayId: desiredOverlayIdPropRef.value,
+      },
+    })
   );
 };
 
@@ -184,7 +165,12 @@ webSocketConnection.onmessage = async (event) => {
           console.log(data);
           if (desiredOverlayIdPropRef.value != "") {
             webSocketConnection.send(
-              `{ "action": "getOverlayContent", "desiredOverlayId": "${desiredOverlayIdPropRef.value}"}`
+              JSON.stringify({
+                action: "getOverlayContent",
+                content: {
+                  desiredOverlayId: desiredOverlayIdPropRef.value,
+                },
+              })
             );
           }
         });
@@ -203,6 +189,8 @@ webSocketConnection.onmessage = async (event) => {
       },
     };
     console.log(overlays.value);
+  } else if (parsedData?.subject == "triggerOverlayOnUsers") {
+    overlayChosenRef.value = parsedData.content.overlayContentToTrigger;
   }
 };
 

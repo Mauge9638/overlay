@@ -216,6 +216,28 @@ Resources:
         - - "integrations"
           - !Ref OverlayHandlerLambdaIntegration
 
+  TriggerOverlayOnUsersRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MyWebSocketApi
+      RouteKey: "triggerOverlayOnUsers"
+      OperationName: TriggerOverlayOnUsersRoute
+      Target: !Join
+        - "/"
+        - - "integrations"
+          - !Ref OverlayHandlerLambdaIntegration
+
+  SendAnswerToOverlayContentRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref MyWebSocketApi
+      RouteKey: "sendAnswerToOverlayContent"
+      OperationName: SendAnswerToOverlayContentRoute
+      Target: !Join
+        - "/"
+        - - "integrations"
+          - !Ref OverlayHandlerLambdaIntegration
+
   # OverlayHandlerLambdaIntegration:
   #   Type: AWS::ApiGatewayV2::Integration
   #   Properties:
@@ -310,6 +332,8 @@ Resources:
       - GetOverlaysRoute
       - AddOverlayRoute
       - GetOverlayContentRoute
+      - TriggerOverlayOnUsersRoute
+      - SendAnswerToOverlayContentRoute
       - ConnectRoute
     Properties:
       ApiId: !Ref MyWebSocketApi

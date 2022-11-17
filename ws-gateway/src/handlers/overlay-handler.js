@@ -1,4 +1,5 @@
 const aws = require("aws-sdk");
+const https = require("https");
 // const dynamodb = require("aws-sdk/clients/dynamodb");
 const docClient = new aws.DynamoDB.DocumentClient();
 const connectionsTable = process.env.CONNECTIONS_TABLE;
@@ -20,12 +21,44 @@ const getSocketContext = (event) => {
           Data: Buffer.from(JSON.stringify(data)),
         })
         .promise();
-    } catch (error) {
+    } catch (err) {
+      if (err.code == "GoneException") {
+        return scanConnectionsTable(
+          "currentConnectionId = :currentConnectionId",
+          { ":currentConnectionId": connectionId }
+        )
+          .then((data) => {
+            const key = data.Items[0].id;
+            return updateConnectionsTable(
+              key,
+              "set connectedToOverlayId = :connectedToOverlayId",
+              { ":connectedToOverlayId": null }
+            );
+          })
+          .then(() => {
+            return Promise.resolve();
+          });
+      }
       console.log("Error in send: ", err);
     }
   };
 
   return { connectionId, endpoint, send, routeKey };
+};
+
+const updateConnectionsTable = async (
+  idValue,
+  UpdateExpression,
+  ExpressionAttributeValues
+) => {
+  return docClient
+    .update({
+      TableName: connectionsTable,
+      Key: { id: idValue },
+      UpdateExpression: UpdateExpression,
+      ExpressionAttributeValues: ExpressionAttributeValues,
+    })
+    .promise();
 };
 
 const updateOverlayTable = async (
@@ -60,6 +93,23 @@ const scanOverlayTable = async (
   }
 };
 
+const scanConnectionsTable = async (
+  FilterExpression,
+  ExpressionAttributeValues
+) => {
+  if (FilterExpression || ExpressionAttributeValues) {
+    return docClient
+      .scan({
+        TableName: connectionsTable,
+        FilterExpression: FilterExpression,
+        ExpressionAttributeValues: ExpressionAttributeValues,
+      })
+      .promise();
+  } else {
+    return docClient.scan({ TableName: connectionsTable }).promise();
+  }
+};
+
 const addToOverlayTable = async (idValue, broadcastTitle, overlayContent) => {
   return docClient
     .put({
@@ -73,22 +123,17 @@ const addToOverlayTable = async (idValue, broadcastTitle, overlayContent) => {
     .promise();
 };
 
-const getOverlayTableItem = async (value) => {
+const getOverlayTableItem = async (idValue) => {
   return docClient
     .get({
       TableName: overlayTable,
-      Key: { id: value },
+      Key: { id: idValue },
     })
     .promise();
 };
 
 exports.overlayHandler = async (event) => {
-  console.log(JSON.stringify(event, 2));
-  console.log("event");
-  console.log(event);
   if (event.requestContext) {
-    console.log("event.requestContext");
-    console.log(event.requestContext);
     const { send } = getSocketContext(event);
     const connectionId = event.requestContext.connectionId;
     const routeKey = event.requestContext.routeKey;
@@ -98,8 +143,8 @@ exports.overlayHandler = async (event) => {
       if (event.body) {
         body = JSON.parse(event.body);
       }
-    } catch (error) {
-      console.log("Error in try catch for event.body");
+    } catch (err) {
+      console.log("Error in try catch for event.body: ", err);
     }
 
     console.log(routeKey);
@@ -108,7 +153,6 @@ exports.overlayHandler = async (event) => {
         try {
           return scanOverlayTable(null, null)
             .then((data) => {
-              console.log(data);
               return send(connectionId, {
                 subject: "getOverlays",
                 content: {
@@ -140,8 +184,8 @@ exports.overlayHandler = async (event) => {
         }
         break;
       case "addOverlay":
-        if (body?.idValue && body?.broadcastTitle && body?.overlayContent) {
-          const { idValue, broadcastTitle, overlayContent } = body;
+        const { idValue, broadcastTitle, overlayContent } = body?.content;
+        if (idValue && broadcastTitle && overlayContent) {
           try {
             return addToOverlayTable(idValue, broadcastTitle, overlayContent)
               .then(() => {
@@ -190,9 +234,9 @@ exports.overlayHandler = async (event) => {
           }
         }
       case "getOverlayContent":
+        const { desiredOverlayId } = body?.content;
         try {
-          if (body?.desiredOverlayId) {
-            const desiredOverlayId = body?.desiredOverlayId;
+          if (desiredOverlayId) {
             return getOverlayTableItem(desiredOverlayId).then((data) => {
               return send(connectionId, {
                 subject: "getOverlayContent",
@@ -238,6 +282,107 @@ exports.overlayHandler = async (event) => {
             body: `An error occured: ${err}`,
           };
 
+          return response;
+        }
+      case "triggerOverlayOnUsers":
+        const { overlayToTrigger, overlayContentToTrigger } = body?.content;
+        if (overlayToTrigger && overlayContentToTrigger) {
+          try {
+            return scanConnectionsTable(
+              "connectedToOverlayId = :overlayToTrigger",
+              { ":overlayToTrigger": overlayToTrigger }
+            )
+              .then((data) => {
+                const usersToSendTo = data.Items.map(async (item) => {
+                  return send(item.currentConnectionId, {
+                    subject: "triggerOverlayOnUsers",
+                    content: {
+                      overlayContentToTrigger: overlayContentToTrigger,
+                    },
+                  });
+                });
+                return usersToSendTo;
+              })
+              .then(async (usersToSendTo) => {
+                return Promise.all(usersToSendTo);
+              })
+              .then(() => {
+                return send(connectionId, {
+                  subject: "triggerOverlayOnUsers",
+                  message:
+                    "Overlays triggered on users associated with overlay",
+                });
+              })
+              .then(() => {
+                return Promise.resolve();
+              })
+              .then(() => {
+                const response = {
+                  isBase64Encoded: false,
+                  statusCode: 200,
+                  body: "Success",
+                };
+                return response;
+              });
+          } catch (err) {
+            const response = {
+              isBase64Encoded: false,
+              statusCode: 400,
+              body: err,
+            };
+            return response;
+          }
+        } else {
+          const response = {
+            isBase64Encoded: false,
+            statusCode: 400,
+            body: "Please supply both overlayToTrigger & overlayContentToTrigger wrapped in content",
+          };
+          return response;
+        }
+      case "sendAnswerToOverlayContent":
+        const { overlayId, overlayContentId, answer } = body?.content;
+        if (overlayId && overlayContentId && answer) {
+          try {
+            return getOverlayTableItem(overlayId)
+              .then((data) => {
+                console.log(data.Item);
+                return data?.Item?.overlayContent?.[overlayContentId];
+              })
+              .then((overlayContent) => {
+                if (overlayContent.answerType == "Integer") {
+                  const currentAnswerCount =
+                    overlayContent?.answers?.[answer].amount;
+                  console.log(currentAnswerCount);
+                  console.log(answer);
+                  // Might be a solution:
+                  //https://stackoverflow.com/questions/40317443/updating-a-json-array-in-aws-dynamodb#:~:text=gmail.com%27%0A%7D-,Params,-var%20params%20%3D%20%7B%0A%20%20%20%20TableName
+                  return updateOverlayTable(
+                    overlayId,
+                    `set answers.${answer}.amount = :currentAnswerCount + :incrementWithOne`,
+                    {
+                      ":currentAnswerCount": currentAnswerCount
+                        ? parseInt(currentAnswerCount)
+                        : 0,
+                      ":incrementWithOne": 1,
+                    }
+                  );
+                }
+              });
+          } catch (err) {
+            const response = {
+              isBase64Encoded: false,
+              statusCode: 400,
+              body: err,
+            };
+            return response;
+          }
+        } else {
+          const response = {
+            isBase64Encoded: false,
+            statusCode: 400,
+            body: "Please supply overlayId & overlayContentId & answer wrapped in content",
+          };
           return response;
         }
       case "sendToAllUsers":

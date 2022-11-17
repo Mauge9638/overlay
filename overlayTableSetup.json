@@ -1,8 +1,8 @@
 {
   "as5pionaspo5napsot": {
     "broadcastTitle": "Some broadcast about animals",
-    "overlayContent": [
-      {
+    "overlayContent": {
+      "a590jsa05ja": {
         "overlayContentId": "as598ahs9tasng9an!",
         "componentName": "OverlaySelect",
         "props": {
@@ -25,9 +25,16 @@
               "value": "idk"
             }
           ]
+        },
+        "answerType": "Integer",
+        "answers": {
+          "yes": { "amount": 2 },
+          "no": { "amount": 0 },
+          "mby": { "amount": 14 },
+          "idk": { "amount": 0 }
         }
       },
-      {
+      "paosgjapsgma": {
         "overlayContentId": "as598ahs9tasng9an!",
         "componentName": "OverlaySelect",
         "props": {
@@ -54,15 +61,23 @@
               "value": "horse"
             }
           ]
+        },
+        "answerType": "Integer",
+        "answers": {
+          "dog": { "amount": 700 },
+          "cat": { "amount": 0 },
+          "cow": { "amount": 14 },
+          "rabbit": { "amount": 0 },
+          "horse": { "amount": 2 }
         }
       }
-    ]
+    }
   },
   // ------- another item
   "a905jas0968sinos6ino": {
     "broadcastTitle": "Some broadcast about colors",
-    "overlayContent": [
-      {
+    "overlayContent": {
+      "0a9sj0a9s5j0": {
         "overlayContentId": "aw5+jas0otnast!",
         "componentName": "OverlaySelect",
         "props": {
@@ -87,13 +102,13 @@
           ]
         }
       }
-    ]
+    }
   },
   // ------- another item
   "509tinosa059jwiansto06a": {
     "broadcastTitle": "Some broadcast about fruit",
-    "overlayContent": [
-      {
+    "overlayContent": {
+      "asgpoaspotas095": {
         "overlayContentId": "089ha09sh560as90!",
         "componentName": "OverlaySelect",
         "props": {
@@ -126,6 +141,6 @@
           ]
         }
       }
-    ]
+    }
   }
 }

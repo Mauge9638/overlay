@@ -38,19 +38,13 @@ const getConnectionsTableItem = async (value) => {
     .promise();
 };
 
-const addToConnectionsTable = async (idValue, connectionValue) => {
+const addToConnectionsTable = async (idValue, additionalContent) => {
   return docClient
     .put({
       TableName: connectionsTable,
       Item: {
         id: idValue,
-        currentConnectionId: connectionValue,
-        currentlyConnected: true,
-        testValue: {
-          key1: "123123",
-          key2: 129312,
-          objects: { key1: "yes", key2: "no", key3: true },
-        },
+        ...additionalContent,
       },
     })
     .promise();
@@ -105,17 +99,20 @@ exports.overlayIdCheckerHandler = async (event) => {
             return response;
           });
       case "checkOverlayCookieId":
-        if (body?.overlayIdCookieKey) {
-          const overlayIdCookieKey = body?.overlayIdCookieKey;
+        const { overlayIdCookieKey, connectedToOverlayId } = body?.content;
+        if (overlayIdCookieKey && connectedToOverlayId) {
+          // const overlayIdCookieKey = body?.overlayIdCookieKey;
+          // const connectedToOverlayId = body?.connectedToOverlayId;
           try {
             return getConnectionsTableItem(overlayIdCookieKey)
               .then((data) => {
                 if (Object.keys(data).length <= 0) {
                   const newOverlayIdCookieKey = crypto.randomUUID();
-                  return addToConnectionsTable(
-                    newOverlayIdCookieKey,
-                    connectionId
-                  )
+                  return addToConnectionsTable(newOverlayIdCookieKey, {
+                    currentConnectionId: connectionId,
+                    currentlyConnected: true,
+                    connectedToOverlayId: connectedToOverlayId,
+                  })
                     .then(() => {
                       return send(connectionId, {
                         subject: "checkOverlayCookieId",
@@ -130,9 +127,11 @@ exports.overlayIdCheckerHandler = async (event) => {
                 } else {
                   return updateConnectionsTable(
                     overlayIdCookieKey,
-                    "set currentlyConnected = :currentlyConnected",
+                    "set currentlyConnected = :currentlyConnected, connectedToOverlayId = :connectedToOverlayId, currentConnectionId = :currentConnectionId",
                     {
                       ":currentlyConnected": true,
+                      ":connectedToOverlayId": connectedToOverlayId,
+                      ":currentConnectionId": connectionId,
                     }
                   ).then(() => {
                     return send(connectionId, {
@@ -171,10 +170,14 @@ exports.overlayIdCheckerHandler = async (event) => {
             };
             return response;
           }
-        } else if (body?.overlayIdCookieKey == "") {
+        } else if (overlayIdCookieKey == "" && connectedToOverlayId) {
           try {
             const newOverlayIdCookieKey = crypto.randomUUID();
-            return addToConnectionsTable(newOverlayIdCookieKey, connectionId)
+            return addToConnectionsTable(newOverlayIdCookieKey, {
+              currentConnectionId: connectionId,
+              currentlyConnected: true,
+              connectedToOverlayId: connectedToOverlayId,
+            })
               .then(() => {
                 return send(connectionId, {
                   subject: "checkOverlayCookieId",
@@ -201,6 +204,13 @@ exports.overlayIdCheckerHandler = async (event) => {
             };
             return response;
           }
+        } else {
+          const response = {
+            isBase64Encoded: false,
+            statusCode: 400,
+            body: `You must supply both overlayIdCookieKey & connectedToOverlayId, wrapped in content as such: {content: {overlayIdCookieKey: overlayIdCookieKey, connectedToOverlayId: connectedToOverlayId}}`,
+          };
+          return response;
         }
         break;
       default:
