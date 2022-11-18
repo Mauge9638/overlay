@@ -3,7 +3,6 @@
     "broadcastTitle": "Some broadcast about animals",
     "overlayContent": {
       "a590jsa05ja": {
-        "overlayContentId": "as598ahs9tasng9an!",
         "componentName": "OverlaySelect",
         "props": {
           "title": "What are you?",
@@ -35,7 +34,6 @@
         }
       },
       "paosgjapsgma": {
-        "overlayContentId": "as598ahs9tasng9an!",
         "componentName": "OverlaySelect",
         "props": {
           "title": "Favourite animal",
@@ -78,7 +76,6 @@
     "broadcastTitle": "Some broadcast about colors",
     "overlayContent": {
       "0a9sj0a9s5j0": {
-        "overlayContentId": "aw5+jas0otnast!",
         "componentName": "OverlaySelect",
         "props": {
           "title": "Favourite color?",
@@ -109,7 +106,6 @@
     "broadcastTitle": "Some broadcast about fruit",
     "overlayContent": {
       "asgpoaspotas095": {
-        "overlayContentId": "089ha09sh560as90!",
         "componentName": "OverlaySelect",
         "props": {
           "title": "Least liked fruit?",

@@ -3,15 +3,41 @@
     <div class="container_overlay">
       <label for="selector_overlay">Vælg et overlay:</label>
       <select v-model="overlaySelected" name="selector_overlay">
-        <option disabled value="">Please select one</option>
+        <option disabled value="">Please select an overlay</option>
         <option
           v-for="(overlay, key) in overlaysFromAWSOverlayTable"
           :key="key"
           :value="overlay"
         >
-          {{ overlay?.["id"] }}
+          {{ overlay?.["broadcastTitle"] }}
         </option>
       </select>
+      <br />
+      <div v-if="Object.keys(overlaySelected).length > 0">
+        <select v-model="overlayContentSelected">
+          <option disabled value="">
+            Please select the overlay content to activate
+          </option>
+          <option
+            v-for="overlayContentOption in Object.keys(
+              overlaySelected?.overlayContent
+            )"
+            :key="overlayContentOption"
+            :value="overlayContentOption"
+          >
+            {{
+              overlaySelected.overlayContent[overlayContentOption]?.props?.title
+            }}
+          </option>
+        </select>
+        <button
+          @click="
+            triggerOverlayOnUsers(overlaySelected.id, overlayContentSelected)
+          "
+        >
+          Activate
+        </button>
+      </div>
       <div>
         Selected:
         {{ overlaySelected?.["broadcastTitle"] }}
@@ -39,57 +65,18 @@
 import { ref } from "vue";
 import { nanoid } from "nanoid";
 
-// const dummyOverlays = [
-//   {
-//     id: nanoid(),
-//     title: "Overlay 1",
-//     usersConnected: Math.round(Math.random() * 1000),
-//     events: [
-//       { id: nanoid(), title: "Question about politicians" },
-//       { id: nanoid(), title: "Poll on airlines" },
-//       { id: nanoid(), title: "Poll on fruits" },
-//     ],
-//   },
-//   {
-//     id: nanoid(),
-//     title: "Overlay 2",
-//     usersConnected: Math.round(Math.random() * 1000),
-//     events: [
-//       { id: nanoid(), title: "on public transport", type: "Poll" },
-//       { id: nanoid(), title: "on vegetables", type: "Poll" },
-//       { id: nanoid(), title: "about cars", type: "Question" },
-//     ],
-//   },
-//   {
-//     id: nanoid(),
-//     title: "Overlay 3",
-//     usersConnected: Math.round(Math.random() * 1000),
-//     events: [
-//       { id: nanoid(), title: "on economy", type: "Poll" },
-//       { id: nanoid(), title: "about politicians", type: "Question" },
-//       { id: nanoid(), title: "on bread", type: "Poll" },
-//     ],
-//   },
-//   {
-//     id: nanoid(),
-//     title: "Overlay 4",
-//     usersConnected: Math.round(Math.random() * 1000),
-//     events: [
-//       { id: nanoid(), title: "on work commute", type: "Question" },
-//       { id: nanoid(), title: "on income level", type: "Question" },
-//       { id: nanoid(), title: "on eating habits", type: "Poll" },
-//     ],
-//   },
-// ];
-
 const overlaysFromAWSOverlayTable = ref([]);
+const overlaySelected = ref({});
+const overlayContentSelected = ref({});
 
-const overlaySelected = ref({
-  id: "",
-  title: "None selected",
-  usersConnected: "",
-  events: [],
-});
+const triggerOverlayOnUsers = (
+  overlayToTrigger: String,
+  overlayContentToTrigger: String
+) => {
+  webSocketConnection.send(
+    `{"action":"triggerOverlayOnUsers", "content":{"overlayToTrigger":"${overlayToTrigger}", "overlayContentToTrigger":"${overlayContentToTrigger}"}}`
+  );
+};
 
 let webSocketConnection: WebSocket;
 

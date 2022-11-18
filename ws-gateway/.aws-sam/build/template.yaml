@@ -7,11 +7,26 @@ Resources:
       Name: MyWebSocketApi
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: $request.body.action
+  DependenciesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: NodeDependencies
+      Description: Node dependencies
+      ContentUri: DependenciesLayer
+      CompatibleRuntimes:
+      - nodejs16.x
+      RetentionPolicy: Retain
+    Metadata:
+      BuildMethod: nodejs16.x
+      SamResourceId: DependenciesLayer
   ConnectionHandlerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/handlers/connection-handler.connectionHandler
+      CodeUri: ConnectionHandlerFunction
+      Handler: connection-handler.connectionHandler
       Timeout: 30
+      Layers:
+      - Ref: DependenciesLayer
       Runtime: nodejs16.x
       Environment:
         Variables:
@@ -26,15 +41,17 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName:
             Ref: ConnectionsTable
-      CodeUri: ConnectionHandlerFunction
     Metadata:
       SamResourceId: ConnectionHandlerFunction
   OverlayIdCheckerHandlerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/handlers/overlay-id-checker-handler.overlayIdCheckerHandler
+      CodeUri: OverlayIdCheckerHandlerFunction
+      Handler: overlay-id-checker-handler.overlayIdCheckerHandler
       Timeout: 30
       Runtime: nodejs16.x
+      Layers:
+      - Ref: DependenciesLayer
       Environment:
         Variables:
           CONNECTIONS_TABLE:
@@ -53,15 +70,17 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName:
             Ref: OverlayTable
-      CodeUri: OverlayIdCheckerHandlerFunction
     Metadata:
       SamResourceId: OverlayIdCheckerHandlerFunction
   OverlayHandlerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/handlers/overlay-handler.overlayHandler
+      CodeUri: OverlayHandlerFunction
+      Handler: overlay-handler.overlayHandler
       Timeout: 30
       Runtime: nodejs16.x
+      Layers:
+      - Ref: DependenciesLayer
       Environment:
         Variables:
           CONNECTIONS_TABLE:
@@ -80,7 +99,6 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName:
             Ref: OverlayTable
-      CodeUri: OverlayHandlerFunction
     Metadata:
       SamResourceId: OverlayHandlerFunction
   ConnectRoute:
@@ -94,8 +112,8 @@ Resources:
         Fn::Join:
         - /
         - - integrations
-          - Ref: ConnectLambdaIntegration
-  ConnectLambdaIntegration:
+          - Ref: ConnectionHandlerLambdaIntegration
+  ConnectionHandlerLambdaIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId:
@@ -104,27 +122,24 @@ Resources:
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ConnectionHandlerFunction.Arn}/invocations
-  TestRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId:
-        Ref: MyWebSocketApi
-      RouteKey: test
-      OperationName: TestRoute
-      Target:
-        Fn::Join:
-        - /
-        - - integrations
-          - Ref: TestLambdaIntegration
-  TestLambdaIntegration:
+  OverlayIdCheckerHandlerLambdaIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId:
         Ref: MyWebSocketApi
-      Description: Test Integration
+      Description: CheckOverlayCookieId Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayIdCheckerHandlerFunction.Arn}/invocations
+  OverlayHandlerLambdaIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: MyWebSocketApi
+      Description: OverlayHandler Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayHandlerFunction.Arn}/invocations
   CheckOverlayCookieIdRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
@@ -136,16 +151,7 @@ Resources:
         Fn::Join:
         - /
         - - integrations
-          - Ref: CheckOverlayCookieIdLambdaIntegration
-  CheckOverlayCookieIdLambdaIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId:
-        Ref: MyWebSocketApi
-      Description: CheckOverlayCookieId Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayIdCheckerHandlerFunction.Arn}/invocations
+          - Ref: OverlayIdCheckerHandlerLambdaIntegration
   GetOverlaysRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
@@ -158,15 +164,6 @@ Resources:
         - /
         - - integrations
           - Ref: OverlayHandlerLambdaIntegration
-  OverlayHandlerLambdaIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId:
-        Ref: MyWebSocketApi
-      Description: OverlayHandler Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayHandlerFunction.Arn}/invocations
   AddOverlayRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
@@ -254,6 +251,13 @@ Resources:
       FunctionName:
         Ref: OverlayHandlerFunction
       Principal: apigateway.amazonaws.com
+  DependenciesLayerPermission:
+    Type: AWS::Lambda::LayerVersionPermission
+    Properties:
+      Action: lambda:GetLayerVersion
+      LayerVersionArn:
+        Ref: DependenciesLayer
+      Principal: '*'
   ConnectionsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -283,7 +287,6 @@ Resources:
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
-    - TestRoute
     - CheckOverlayCookieIdRoute
     - GetOverlaysRoute
     - AddOverlayRoute

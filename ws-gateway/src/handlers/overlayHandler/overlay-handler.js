@@ -61,17 +61,12 @@ const updateConnectionsTable = async (
     .promise();
 };
 
-const updateOverlayTable = async (
-  idValue,
-  UpdateExpression,
-  ExpressionAttributeValues
-) => {
+const updateOverlayTable = async (idValue, expressions) => {
   return docClient
     .update({
       TableName: overlayTable,
       Key: { id: idValue },
-      UpdateExpression: UpdateExpression,
-      ExpressionAttributeValues: ExpressionAttributeValues,
+      ...expressions,
     })
     .promise();
 };
@@ -353,20 +348,37 @@ exports.overlayHandler = async (event) => {
                 if (overlayContent.answerType == "Integer") {
                   const currentAnswerCount =
                     overlayContent?.answers?.[answer].amount;
-                  console.log(currentAnswerCount);
-                  console.log(answer);
-                  // Might be a solution:
-                  //https://stackoverflow.com/questions/40317443/updating-a-json-array-in-aws-dynamodb#:~:text=gmail.com%27%0A%7D-,Params,-var%20params%20%3D%20%7B%0A%20%20%20%20TableName
-                  return updateOverlayTable(
-                    overlayId,
-                    `set answers.${answer}.amount = :currentAnswerCount + :incrementWithOne`,
-                    {
+                  return updateOverlayTable(overlayId, {
+                    UpdateExpression: `set overlayContent.#overlayContentId.answers.#answer.amount = :currentAnswerCount + :incrementWithOne`,
+                    ExpressionAttributeNames: {
+                      "#overlayContentId": overlayContentId,
+                      "#answer": answer,
+                    },
+                    ExpressionAttributeValues: {
                       ":currentAnswerCount": currentAnswerCount
                         ? parseInt(currentAnswerCount)
                         : 0,
                       ":incrementWithOne": 1,
-                    }
-                  );
+                    },
+                  })
+                    .then((data) => {
+                      console.log(data);
+                      return send(connectionId, {
+                        subject: "sendAnswerToOverlayContent",
+                        message: "Your answer was successfully registered",
+                      });
+                    })
+                    .then(() => {
+                      return Promise.resolve();
+                    })
+                    .then(() => {
+                      const response = {
+                        isBase64Encoded: false,
+                        statusCode: 200,
+                        body: "Success in operation",
+                      };
+                      return response;
+                    });
                 }
               });
           } catch (err) {

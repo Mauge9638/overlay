@@ -23,36 +23,26 @@ Resources:
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
 
-  # TestHandlerFunction:
-  #   Type: AWS::Serverless::Function
-  #   Properties:
-  #     Handler: src/handlers/test-handler.testHandler
-  #     Timeout: 30
-  #     Runtime: nodejs16.x
-  #     # CodeUri: ./
-  #     Policies:
-  #       - AWSLambda_FullAccess
-  #       - CloudWatchLogsFullAccess
-  #       - AmazonAPIGatewayInvokeFullAccess
-  #       - AmazonAPIGatewayAdministrator
-
-  # Dependencies:
-  #   Type: AWS::Serverless::LayerVersion
-  #   Properties:
-  #     LayerName: NodeDependencies
-  #     Description: Dependencies
-  #     ContentUri: ./*.json
-  #     CompatibleRuntimes:
-  #       - nodejs16.x
-  #     RetentionPolicy: Retain
-  #   Metadata:
-  #     BuildMethod: nodejs16.x
+  DependenciesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: NodeDependencies
+      Description: Node dependencies
+      ContentUri: ./dependencies
+      CompatibleRuntimes:
+        - nodejs16.x
+      RetentionPolicy: Retain
+    Metadata:
+      BuildMethod: nodejs16.x
 
   ConnectionHandlerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/handlers/connection-handler.connectionHandler
+      CodeUri: src/handlers/connectionHandler/
+      Handler: connection-handler.connectionHandler
       Timeout: 30
+      Layers:
+        - !Ref DependenciesLayer
       Runtime: nodejs16.x
       Environment:
         Variables:
@@ -71,9 +61,12 @@ Resources:
   OverlayIdCheckerHandlerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/handlers/overlay-id-checker-handler.overlayIdCheckerHandler
+      CodeUri: src/handlers/overlayIdCheckerHandler/
+      Handler: overlay-id-checker-handler.overlayIdCheckerHandler
       Timeout: 30
       Runtime: nodejs16.x
+      Layers:
+        - !Ref DependenciesLayer
       Environment:
         Variables:
           # Make table name accessible as environment variable from function code during execution
@@ -94,9 +87,12 @@ Resources:
   OverlayHandlerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/handlers/overlay-handler.overlayHandler
+      CodeUri: src/handlers/overlayHandler/
+      Handler: overlay-handler.overlayHandler
       Timeout: 30
       Runtime: nodejs16.x
+      Layers:
+        - !Ref DependenciesLayer
       Environment:
         Variables:
           # Make table name accessible as environment variable from function code during execution
@@ -123,9 +119,9 @@ Resources:
       Target: !Join
         - "/"
         - - "integrations"
-          - !Ref ConnectLambdaIntegration
+          - !Ref ConnectionHandlerLambdaIntegration
 
-  ConnectLambdaIntegration:
+  ConnectionHandlerLambdaIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId: !Ref MyWebSocketApi
@@ -134,25 +130,23 @@ Resources:
       IntegrationUri:
         Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ConnectionHandlerFunction.Arn}/invocations
 
-  TestRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref MyWebSocketApi
-      RouteKey: "test"
-      OperationName: TestRoute
-      Target: !Join
-        - "/"
-        - - "integrations"
-          - !Ref TestLambdaIntegration
-
-  TestLambdaIntegration:
+  OverlayIdCheckerHandlerLambdaIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId: !Ref MyWebSocketApi
-      Description: Test Integration
+      Description: CheckOverlayCookieId Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayIdCheckerHandlerFunction.Arn}/invocations
+
+  OverlayHandlerLambdaIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref MyWebSocketApi
+      Description: OverlayHandler Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayHandlerFunction.Arn}/invocations
 
   CheckOverlayCookieIdRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -163,16 +157,7 @@ Resources:
       Target: !Join
         - "/"
         - - "integrations"
-          - !Ref CheckOverlayCookieIdLambdaIntegration
-
-  CheckOverlayCookieIdLambdaIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref MyWebSocketApi
-      Description: CheckOverlayCookieId Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayIdCheckerHandlerFunction.Arn}/invocations
+          - !Ref OverlayIdCheckerHandlerLambdaIntegration
 
   GetOverlaysRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -184,15 +169,6 @@ Resources:
         - "/"
         - - "integrations"
           - !Ref OverlayHandlerLambdaIntegration
-
-  OverlayHandlerLambdaIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref MyWebSocketApi
-      Description: OverlayHandler Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayHandlerFunction.Arn}/invocations
 
   AddOverlayRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -237,15 +213,6 @@ Resources:
         - "/"
         - - "integrations"
           - !Ref OverlayHandlerLambdaIntegration
-
-  # OverlayHandlerLambdaIntegration:
-  #   Type: AWS::ApiGatewayV2::Integration
-  #   Properties:
-  #     ApiId: !Ref MyWebSocketApi
-  #     Description: OverlayHandler Integration
-  #     IntegrationType: AWS_PROXY
-  #     IntegrationUri:
-  #       Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OverlayHandlerFunction.Arn}/invocations
 
   # Auth:
   #   Type: "AWS::ApiGatewayV2::Authorizer"
@@ -296,6 +263,13 @@ Resources:
       FunctionName: !Ref OverlayHandlerFunction
       Principal: apigateway.amazonaws.com
 
+  DependenciesLayerPermission:
+    Type: AWS::Lambda::LayerVersionPermission
+    Properties:
+      Action: lambda:GetLayerVersion
+      LayerVersionArn: !Ref DependenciesLayer
+      Principal: "*"
+
   ConnectionsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -327,7 +301,6 @@ Resources:
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
-      - TestRoute
       - CheckOverlayCookieIdRoute
       - GetOverlaysRoute
       - AddOverlayRoute
