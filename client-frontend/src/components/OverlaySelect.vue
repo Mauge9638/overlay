@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, toRef, watch, defineEmits } from "vue";
+import { onMounted, ref, toRef, watch } from "vue";
 const props = defineProps({
   props: { type: Object, required: true },
 });

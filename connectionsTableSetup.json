@@ -1,0 +1,16 @@
+{
+  "6f2fc525-476a-4b3a-a21b-2ac1d24ddc83": {
+    "connectedToOverlayId": "as5pionaspo5napsot",
+    "currentConnectionId": "b2F-VeSHliACHiQ=",
+    "answered": {
+      "as5pionaspo5napsot": {
+        "a590jsa-05ja": true
+      }
+    }
+  },
+  // ------- another item
+  "bb875b9a-3546-492c-8498-73e1c360a794": {
+    "connectedToOverlayId": "as5pionaspo5napsot",
+    "currentConnectionId": "b2F2CfQbFiACFrw="
+  }
+}

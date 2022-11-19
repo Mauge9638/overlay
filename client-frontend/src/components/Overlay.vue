@@ -49,19 +49,23 @@ watch(overlayChosenRef, () => {
 });
 
 const onSendAnswerToOverlayContent = (answer) => {
+  /*  const overlayContainer = document.querySelector(`.${titlePropRef.value}`); */
   const overlayContainer = document.querySelector(`.${titlePropRef.value}`);
-  // webSocketConnection.send(
-  //   JSON.stringify({
-  //     action: "sendAnswerToOverlayContent",
-  //     content: {
-  //       overlayId: desiredOverlayIdPropRef.value,
-  //       overlayContentId: overlayChosenRef.value,
-  //       answer: answer,
-  //     },
-  //   })
-  // );
+  webSocketConnection.send(
+    JSON.stringify({
+      action: "sendAnswerToOverlayContent",
+      content: {
+        overlayId: desiredOverlayIdPropRef.value,
+        overlayContentId: overlayChosenRef.value,
+        answer: answer,
+        overlayCookieId: getCookie("overlayIdCookieKey"),
+      },
+    })
+  );
   try {
+    // @ts-ignore
     overlayContainer.classList.remove("opacity-100");
+    // @ts-ignore
     overlayContainer.classList.add("opacity-0");
     setTimeout(() => {
       overlayChosenRef.value = "";

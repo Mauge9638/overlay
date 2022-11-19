@@ -1,6 +1,7 @@
 <template>
   <div class="container">
     <div class="container_overlay">
+      Connection is: {{ connectionStatus }} <br />
       <label for="selector_overlay">Vælg et overlay:</label>
       <select v-model="overlaySelected" name="selector_overlay">
         <option disabled value="">Please select an overlay</option>
@@ -68,6 +69,7 @@ import { nanoid } from "nanoid";
 const overlaysFromAWSOverlayTable = ref([]);
 const overlaySelected = ref({});
 const overlayContentSelected = ref({});
+const connectionStatus = ref("");
 
 const triggerOverlayOnUsers = (
   overlayToTrigger: String,
@@ -83,15 +85,23 @@ let webSocketConnection: WebSocket;
 webSocketConnection = new WebSocket(
   "wss://sonim20w02.execute-api.eu-central-1.amazonaws.com/v1"
 );
+
 webSocketConnection.onopen = async (event) => {
   console.log("onopen");
   console.log(event);
+  connectionStatus.value = event.type;
   webSocketConnection.send(`{ "action": "getOverlays"}`);
 };
 webSocketConnection.onerror = (event) => {
   console.log("onerror");
   console.log(event);
+  connectionStatus.value = event.type;
 };
+
+webSocketConnection.onclose = (event) => {
+  connectionStatus.value = event.type;
+};
+
 webSocketConnection.onmessage = (event) => {
   console.log("onmessage");
   console.log(event);

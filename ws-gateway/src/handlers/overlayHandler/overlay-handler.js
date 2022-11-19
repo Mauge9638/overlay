@@ -23,17 +23,17 @@ const getSocketContext = (event) => {
         .promise();
     } catch (err) {
       if (err.code == "GoneException") {
-        return scanConnectionsTable(
-          "currentConnectionId = :currentConnectionId",
-          { ":currentConnectionId": connectionId }
-        )
+        return scanConnectionsTable({
+          FilterExpression: "currentConnectionId = :currentConnectionId",
+          ExpressionAttributeValues: { ":currentConnectionId": connectionId },
+        })
           .then((data) => {
             const key = data.Items[0].id;
-            return updateConnectionsTable(
-              key,
-              "set connectedToOverlayId = :connectedToOverlayId",
-              { ":connectedToOverlayId": null }
-            );
+            return updateConnectionsTable(key, {
+              FilterExpression:
+                "set connectedToOverlayId = :connectedToOverlayId",
+              ExpressionAttributeValues: { ":connectedToOverlayId": null },
+            });
           })
           .then(() => {
             return Promise.resolve();
@@ -46,17 +46,12 @@ const getSocketContext = (event) => {
   return { connectionId, endpoint, send, routeKey };
 };
 
-const updateConnectionsTable = async (
-  idValue,
-  UpdateExpression,
-  ExpressionAttributeValues
-) => {
+const updateConnectionsTable = async (idValue, expressions) => {
   return docClient
     .update({
       TableName: connectionsTable,
       Key: { id: idValue },
-      UpdateExpression: UpdateExpression,
-      ExpressionAttributeValues: ExpressionAttributeValues,
+      ...expressions,
     })
     .promise();
 };
@@ -88,16 +83,12 @@ const scanOverlayTable = async (
   }
 };
 
-const scanConnectionsTable = async (
-  FilterExpression,
-  ExpressionAttributeValues
-) => {
-  if (FilterExpression || ExpressionAttributeValues) {
+const scanConnectionsTable = async (expressions) => {
+  if (expressions) {
     return docClient
       .scan({
         TableName: connectionsTable,
-        FilterExpression: FilterExpression,
-        ExpressionAttributeValues: ExpressionAttributeValues,
+        ...expressions,
       })
       .promise();
   } else {
@@ -283,10 +274,17 @@ exports.overlayHandler = async (event) => {
         const { overlayToTrigger, overlayContentToTrigger } = body?.content;
         if (overlayToTrigger && overlayContentToTrigger) {
           try {
-            return scanConnectionsTable(
-              "connectedToOverlayId = :overlayToTrigger",
-              { ":overlayToTrigger": overlayToTrigger }
-            )
+            return scanConnectionsTable({
+              FilterExpression:
+                "connectedToOverlayId = :overlayToTrigger AND NOT contains(answered.#overlayToTrigger, :overlayContentToTrigger)",
+              ExpressionAttributeNames: {
+                "#overlayToTrigger": overlayToTrigger,
+              },
+              ExpressionAttributeValues: {
+                ":overlayToTrigger": overlayToTrigger,
+                ":overlayContentToTrigger": overlayContentToTrigger,
+              },
+            })
               .then((data) => {
                 const usersToSendTo = data.Items.map(async (item) => {
                   return send(item.currentConnectionId, {
@@ -336,13 +334,28 @@ exports.overlayHandler = async (event) => {
           return response;
         }
       case "sendAnswerToOverlayContent":
-        const { overlayId, overlayContentId, answer } = body?.content;
+        const { overlayId, overlayContentId, answer, overlayCookieId } =
+          body?.content;
         if (overlayId && overlayContentId && answer) {
+          docClient.set;
           try {
-            return getOverlayTableItem(overlayId)
+            return updateConnectionsTable(overlayCookieId, {
+              UpdateExpression: "add answered.#overlayId = :overlayContentId",
+              ExpressionAttributeNames: { "#overlayId": overlayId },
+              ExpressionAttributeValues: {
+                ":value": {
+                  [overlayId]: docClient.createSet(overlayContentId),
+                },
+              },
+            })
               .then((data) => {
-                console.log(data.Item);
-                return data?.Item?.overlayContent?.[overlayContentId];
+                console.log(data);
+              })
+              .then(() => {
+                return getOverlayTableItem(overlayId).then((data) => {
+                  console.log(data.Item);
+                  return data?.Item?.overlayContent?.[overlayContentId];
+                });
               })
               .then((overlayContent) => {
                 if (overlayContent.answerType == "Integer") {
