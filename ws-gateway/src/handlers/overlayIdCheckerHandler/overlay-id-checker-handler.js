@@ -29,11 +29,11 @@ const getSocketContext = (event) => {
   return { connectionId, endpoint, send, routeKey };
 };
 
-const getConnectionsTableItem = async (value) => {
+const getConnectionsTableItem = async (idValue) => {
   return docClient
     .get({
       TableName: connectionsTable,
-      Key: { id: value },
+      Key: { id: idValue },
     })
     .promise();
 };
@@ -110,7 +110,6 @@ exports.overlayIdCheckerHandler = async (event) => {
                   const newOverlayIdCookieKey = crypto.randomUUID();
                   return addToConnectionsTable(newOverlayIdCookieKey, {
                     currentConnectionId: connectionId,
-                    currentlyConnected: true,
                     connectedToOverlayId: connectedToOverlayId,
                   })
                     .then(() => {
@@ -127,9 +126,8 @@ exports.overlayIdCheckerHandler = async (event) => {
                 } else {
                   return updateConnectionsTable(
                     overlayIdCookieKey,
-                    "set currentlyConnected = :currentlyConnected, connectedToOverlayId = :connectedToOverlayId, currentConnectionId = :currentConnectionId",
+                    "set connectedToOverlayId = :connectedToOverlayId, currentConnectionId = :currentConnectionId",
                     {
-                      ":currentlyConnected": true,
                       ":connectedToOverlayId": connectedToOverlayId,
                       ":currentConnectionId": connectionId,
                     }
@@ -175,7 +173,6 @@ exports.overlayIdCheckerHandler = async (event) => {
             const newOverlayIdCookieKey = crypto.randomUUID();
             return addToConnectionsTable(newOverlayIdCookieKey, {
               currentConnectionId: connectionId,
-              currentlyConnected: true,
               connectedToOverlayId: connectedToOverlayId,
             })
               .then(() => {

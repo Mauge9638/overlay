@@ -80,39 +80,9 @@ exports.connectionHandler = async (event) => {
         };
 
         return response;
+      // Not used due to $disconnect being a "best effort operation", therefor it's not reliable and therefor not trustworthy
       case "$disconnect":
-        try {
-          return scanConnectionsTable(
-            "currentConnectionId = :currentConnectionId",
-            { ":currentConnectionId": connectionId }
-          ).then((data) => {
-            const id = data?.Items[0]?.id;
-            return updateConnectionsTable(
-              id,
-              "set currentlyConnected = :currentlyConnected, currentConnectionId = :currentConnectionId",
-              {
-                ":currentConnectionId": "",
-                ":currentlyConnected": false,
-              }
-            ).then(() => {
-              const response = {
-                isBase64Encoded: false,
-                statusCode: 200,
-                body: "",
-              };
-
-              return response;
-            });
-          });
-        } catch (error) {
-          const response = {
-            isBase64Encoded: false,
-            statusCode: 400,
-            body: ("An error occured", error),
-          };
-
-          return response;
-        }
+        break;
     }
   }
 

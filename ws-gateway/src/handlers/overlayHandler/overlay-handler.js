@@ -30,9 +30,12 @@ const getSocketContext = (event) => {
           .then((data) => {
             const key = data.Items[0].id;
             return updateConnectionsTable(key, {
-              FilterExpression:
-                "set connectedToOverlayId = :connectedToOverlayId",
-              ExpressionAttributeValues: { ":connectedToOverlayId": null },
+              UpdateExpression:
+                "set connectedToOverlayId = :connectedToOverlayIdl, currentConnectionId = :currentConnectionId",
+              ExpressionAttributeValues: {
+                ":connectedToOverlayId": null,
+                ":currentConnectionId": null,
+              },
             });
           })
           .then(() => {
@@ -113,6 +116,15 @@ const getOverlayTableItem = async (idValue) => {
   return docClient
     .get({
       TableName: overlayTable,
+      Key: { id: idValue },
+    })
+    .promise();
+};
+
+const getConnectionsTableItem = async (idValue) => {
+  return docClient
+    .get({
+      TableName: connectionsTable,
       Key: { id: idValue },
     })
     .promise();
@@ -336,18 +348,29 @@ exports.overlayHandler = async (event) => {
       case "sendAnswerToOverlayContent":
         const { overlayId, overlayContentId, answer, overlayCookieId } =
           body?.content;
-        if (overlayId && overlayContentId && answer) {
-          docClient.set;
+        if (overlayId && overlayContentId && answer && overlayCookieId) {
           try {
-            return updateConnectionsTable(overlayCookieId, {
-              UpdateExpression: "add answered.#overlayId = :overlayContentId",
-              ExpressionAttributeNames: { "#overlayId": overlayId },
-              ExpressionAttributeValues: {
-                ":value": {
-                  [overlayId]: docClient.createSet(overlayContentId),
-                },
-              },
-            })
+            return getConnectionsTableItem(overlayCookieId)
+              .then((result) => {
+                console.log(result);
+                if (result?.Item?.answered?.[overlayId]) {
+                  return updateConnectionsTable(overlayCookieId, {
+                    UpdateExpression:
+                      "set answered.#overlayId = list_append(answered.#overlayId, :overlayContentId)",
+                    ExpressionAttributeNames: { "#overlayId": overlayId },
+                    ExpressionAttributeValues: {
+                      ":overlayContentId": [overlayContentId],
+                    },
+                  });
+                } else {
+                  return updateConnectionsTable(overlayCookieId, {
+                    UpdateExpression: "set answered = :value",
+                    ExpressionAttributeValues: {
+                      ":value": { [overlayId]: [overlayContentId] },
+                    },
+                  });
+                }
+              })
               .then((data) => {
                 console.log(data);
               })

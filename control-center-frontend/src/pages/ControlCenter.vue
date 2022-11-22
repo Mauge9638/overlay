@@ -1,8 +1,7 @@
 <template>
   <div class="container">
-    <div class="container_overlay">
-      Connection is: {{ connectionStatus }} <br />
-      <label for="selector_overlay">Vælg et overlay:</label>
+    <div class="selector_container">
+      <label for="selector_overlay">Select an overlay:</label> <br />
       <select v-model="overlaySelected" name="selector_overlay">
         <option disabled value="">Please select an overlay</option>
         <option
@@ -43,8 +42,10 @@
         Selected:
         {{ overlaySelected?.["broadcastTitle"] }}
       </div>
+      <button @click="refreshData">Refresh</button>
     </div>
-    <div class="container_overlay">
+    <br />
+    <div class="questions_container">
       <div
         v-for="event in overlaySelected?.overlayContent"
         :key="event?.['id']"
@@ -55,10 +56,34 @@
         </h2>
         <h3>Options:</h3>
         <div v-for="option in event?.props?.options" :key="option?.['value']">
-          <p>- {{ option?.["label"] }}</p>
+          <p>
+            - {{ option?.["label"] }} with
+            {{ event?.answers?.[option?.value]?.amount }} selections
+          </p>
         </div>
       </div>
     </div>
+    <div class="answers_container invisible">
+      <div
+        v-for="event in overlaySelected?.overlayContent"
+        :key="event?.['id']"
+      >
+        <h2>
+          Answers for: {{ event?.["props"]?.["title"] }} <br />
+          ----------------------------------
+        </h2>
+        <h3>Options:</h3>
+        <div v-for="answer in event?.answers" :key="answer">
+          <p>- {{ answer?.["amount"] }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="websocket_connection_status">
+    <p v-if="(connectionStatus = 'open')" class="bg-green-800">
+      Connection is: {{ connectionStatus }}
+    </p>
+    <p v-else class="bg-red-800">Connection is: {{ connectionStatus }}</p>
   </div>
 </template>
 
@@ -78,6 +103,10 @@ const triggerOverlayOnUsers = (
   webSocketConnection.send(
     `{"action":"triggerOverlayOnUsers", "content":{"overlayToTrigger":"${overlayToTrigger}", "overlayContentToTrigger":"${overlayContentToTrigger}"}}`
   );
+};
+
+const refreshData = () => {
+  webSocketConnection.send(`{ "action": "getOverlays"}`);
 };
 
 let webSocketConnection: WebSocket;
@@ -115,15 +144,28 @@ webSocketConnection.onmessage = (event) => {
 };
 </script>
 
-<style scoped>
+<style>
 .container {
-  display: grid;
+  @apply absolute top-2 left-2 w-full h-fit grid grid-cols-2 gap-4 grid-rows-2;
 }
-.container_selector {
-  grid-column: 1 / span 2;
+.selector_container {
+  @apply bg-blue-600 text-left;
 }
 
-.container_overlay {
-  grid-column: 4 / span 2;
+.selector_container button {
+  @apply border-solid border-2 border-black rounded-md bg-slate-600;
+}
+.questions_container {
+  @apply text-left;
+}
+.answers_container {
+  @apply col-span-1;
+}
+
+.websocket_connection_status {
+  @apply absolute left-0 bottom-0;
+}
+.websocket_connection_status p {
+  @apply pl-2 pr-2;
 }
 </style>
