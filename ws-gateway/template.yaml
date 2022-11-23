@@ -98,6 +98,7 @@ Resources:
           # Make table name accessible as environment variable from function code during execution
           CONNECTIONS_TABLE: !Ref ConnectionsTable
           OVERLAY_TABLE: !Ref OverlayTable
+          WEBSOCKET_API_KEY: "Hpoo7KX6aT85bHmzYgif!Y3E7a7rHkiXgmyaJStb"
       # CodeUri: ./
       Policies:
         - AWSLambda_FullAccess

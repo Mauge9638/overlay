@@ -11,7 +11,7 @@
       <input
         v-model="overlayAnswerRef"
         :id="option.value"
-        type="radio"
+        type="checkbox"
         :value="option.value"
       />
       <label :for="option.value">{{ option.label }}</label
@@ -31,7 +31,7 @@ const emit = defineEmits(["sendAnswerToOverlayContent"]);
 
 const propsPropRef = toRef(props, "props");
 
-const overlayAnswerRef = ref("");
+const overlayAnswerRef = ref([]);
 
 const sendAnswer = () => {
   emit("sendAnswerToOverlayContent", overlayAnswerRef.value);

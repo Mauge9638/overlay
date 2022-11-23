@@ -4,6 +4,7 @@ const https = require("https");
 const docClient = new aws.DynamoDB.DocumentClient();
 const connectionsTable = process.env.CONNECTIONS_TABLE;
 const overlayTable = process.env.OVERLAY_TABLE;
+const websocketApiKey = process.env.WEBSOCKET_API_KEY;
 
 const getSocketContext = (event) => {
   const { domainName, stage, connectionId, routeKey } = event.requestContext;
@@ -283,8 +284,16 @@ exports.overlayHandler = async (event) => {
           return response;
         }
       case "triggerOverlayOnUsers":
-        const { overlayToTrigger, overlayContentToTrigger } = body?.content;
-        if (overlayToTrigger && overlayContentToTrigger) {
+        const {
+          overlayToTrigger,
+          overlayContentToTrigger,
+          clientWebsocketApiKey,
+        } = body?.content;
+        if (
+          overlayToTrigger &&
+          overlayContentToTrigger &&
+          websocketApiKey === clientWebsocketApiKey
+        ) {
           try {
             return scanConnectionsTable({
               FilterExpression:
@@ -341,7 +350,7 @@ exports.overlayHandler = async (event) => {
           const response = {
             isBase64Encoded: false,
             statusCode: 400,
-            body: "Please supply both overlayToTrigger & overlayContentToTrigger wrapped in content",
+            body: "Please supply both overlayToTrigger, overlayContentToTrigger & clientWebsocketApiKey wrapped in content",
           };
           return response;
         }
@@ -381,19 +390,28 @@ exports.overlayHandler = async (event) => {
                 });
               })
               .then((overlayContent) => {
-                if (overlayContent.answerType == "Integer") {
-                  const currentAnswerCount =
-                    overlayContent?.answers?.[answer].amount;
+                if (
+                  overlayContent.answerType == "Integer" ||
+                  overlayContent.answerType == "Multiple Integer"
+                ) {
+                  let updateExpression = "add";
+                  let expressionAttributeNames = {
+                    "#overlayContentId": overlayContentId,
+                  };
+                  const answerAsArray =
+                    typeof answer == "string" ? [answer] : answer;
+                  for (const answer in answerAsArray) {
+                    if (answer != 0) {
+                      updateExpression += ",";
+                    }
+                    updateExpression += ` overlayContent.#overlayContentId.answers.#${answerAsArray[answer]}.amount :incrementWithOne`;
+                    expressionAttributeNames[`#${answerAsArray[answer]}`] =
+                      answerAsArray[answer];
+                  }
                   return updateOverlayTable(overlayId, {
-                    UpdateExpression: `set overlayContent.#overlayContentId.answers.#answer.amount = :currentAnswerCount + :incrementWithOne`,
-                    ExpressionAttributeNames: {
-                      "#overlayContentId": overlayContentId,
-                      "#answer": answer,
-                    },
+                    UpdateExpression: updateExpression,
+                    ExpressionAttributeNames: expressionAttributeNames,
                     ExpressionAttributeValues: {
-                      ":currentAnswerCount": currentAnswerCount
-                        ? parseInt(currentAnswerCount)
-                        : 0,
                       ":incrementWithOne": 1,
                     },
                   })

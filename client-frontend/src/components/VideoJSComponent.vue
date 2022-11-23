@@ -1,5 +1,4 @@
 <template>
-  <div>{{ title }}</div>
   <!-- <div :class="`video-wrapper-for-${title}`"></div> -->
   <video-js :id="title" />
 </template>

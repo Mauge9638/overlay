@@ -18,7 +18,9 @@
 
 <script setup lang="ts">
 import { onMounted, ref, toRef, watch } from "vue";
+import OverlayMultiSelect from "./OverlayMultiSelect.vue";
 import OverlaySelect from "./OverlaySelect.vue";
+import { getCookie, setCookie } from "../helpers/cookieHandling";
 const props = defineProps({
   title: { type: String, required: true },
   desiredOverlayId: { type: String, required: true },
@@ -28,7 +30,10 @@ const desiredOverlayIdPropRef = toRef(props, "desiredOverlayId");
 const titlePropRef = toRef(props, "title");
 const videoPlayerToAttachToPropRef = toRef(props, "videoPlayerToAttachTo");
 
-const overlayComponentOptions = { OverlaySelect: OverlaySelect };
+const overlayComponentOptions = {
+  OverlaySelect: OverlaySelect,
+  OverlayMultiSelect: OverlayMultiSelect,
+};
 
 const overlayChosenRef = ref("");
 const overlayAnswerRef = ref("");
@@ -50,6 +55,7 @@ watch(overlayChosenRef, () => {
 
 const onSendAnswerToOverlayContent = (answer) => {
   /*  const overlayContainer = document.querySelector(`.${titlePropRef.value}`); */
+  console.log(answer);
   const overlayContainer = document.querySelector(`.${titlePropRef.value}`);
   webSocketConnection.send(
     JSON.stringify({
@@ -79,31 +85,31 @@ webSocketConnection = new WebSocket(
   "wss://sonim20w02.execute-api.eu-central-1.amazonaws.com/v1"
 );
 
-const getCookie = (cookieName: string): string => {
-  const name = cookieName + "=";
-  const cookies = document.cookie.split(";");
-  for (let i = 0; i < cookies.length; i++) {
-    let currentCookie = cookies[i];
-    while (currentCookie.charAt(0) == " ") {
-      currentCookie = currentCookie.substring(1);
-    }
-    if (currentCookie.indexOf(name) == 0) {
-      return currentCookie.substring(name.length, currentCookie.length);
-    }
-  }
-  return "";
-};
+// const getCookie = (cookieName: string): string => {
+//   const name = cookieName + "=";
+//   const cookies = document.cookie.split(";");
+//   for (let i = 0; i < cookies.length; i++) {
+//     let currentCookie = cookies[i];
+//     while (currentCookie.charAt(0) == " ") {
+//       currentCookie = currentCookie.substring(1);
+//     }
+//     if (currentCookie.indexOf(name) == 0) {
+//       return currentCookie.substring(name.length, currentCookie.length);
+//     }
+//   }
+//   return "";
+// };
 
-const setCookie = async (
-  cookieName: string,
-  cookieValue: string,
-  existDays: number
-) => {
-  const expiryDate = new Date();
-  expiryDate.setTime(expiryDate.getTime() + existDays * 24 * 60 * 60 * 1000);
-  let expires = "expires=" + expiryDate.toUTCString();
-  document.cookie = cookieName + "=" + cookieValue + ";" + expires + ";path=/";
-};
+// const setCookie = async (
+//   cookieName: string,
+//   cookieValue: string,
+//   existDays: number
+// ) => {
+//   const expiryDate = new Date();
+//   expiryDate.setTime(expiryDate.getTime() + existDays * 24 * 60 * 60 * 1000);
+//   let expires = "expires=" + expiryDate.toUTCString();
+//   document.cookie = cookieName + "=" + cookieValue + ";" + expires + ";path=/";
+// };
 
 const checkOverlayCookieIdValidity = async () => {
   console.log("Getting cookie with the name: overlayIdCookieKey");
