@@ -44,15 +44,16 @@
           </button>
           <br />
           <button @click="refreshData">Refresh data</button>
-          <button @click="refreshDataEvery">
+          <button v-if="!autoRefreshDataActive" @click="startAutoRefresh">
             Refresh data every {{ refreshDataFrequency / 1000 }} seconds
           </button>
-          <input
-            class="pl-2 w-20"
-            v-model="refreshDataFrequency"
-            type="number"
-            min="1000"
-          />
+          <button
+            class="animate-pulse"
+            v-else-if="autoRefreshDataActive"
+            @click="stopAutoRefresh"
+          >
+            Stop automatic data refreshing
+          </button>
         </div>
       </div>
       <br />
@@ -112,7 +113,8 @@ const overlaysFromAWSOverlayTable = ref([]);
 const overlaySelected = ref("");
 const overlayContentSelected = ref({});
 const connectionStatus = ref("");
-const refreshDataFrequency = ref(30000);
+const refreshDataFrequency = ref(10000);
+const autoRefreshDataActive = ref(false);
 
 const triggerOverlayOnUsers = (
   overlayToTrigger: String,
@@ -129,9 +131,18 @@ const refreshData = () => {
   webSocketConnection.send(`{ "action": "getOverlays"}`);
 };
 
-const refreshDataEvery = () => {
-  setInterval(() => {
-    refreshData();
+const stopAutoRefresh = () => {
+  autoRefreshDataActive.value = false;
+};
+
+const startAutoRefresh = () => {
+  autoRefreshDataActive.value = true;
+  const autoRefresh = setInterval(() => {
+    if (autoRefreshDataActive.value) {
+      refreshData();
+    } else {
+      clearInterval(autoRefresh);
+    }
   }, refreshDataFrequency.value);
 };
 
@@ -196,5 +207,9 @@ webSocketConnection.onmessage = (event) => {
 }
 button {
   @apply pl-2 pr-2 mr-2 border-solid border-2 border-black rounded-md bg-slate-600 mt-2;
+}
+
+button:active {
+  @apply bg-slate-400 shadow-inner;
 }
 </style>

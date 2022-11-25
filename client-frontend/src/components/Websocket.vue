@@ -112,7 +112,7 @@ onMounted(() => {
   grid-area: videoPlayers;
   display: grid;
   grid-template-areas: "videoJsPlayer";
-  @apply w-screen h-screen;
+  @apply w-3/4 h-screen;
 }
 
 .videoJsPlayer {
