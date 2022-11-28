@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, toRef, watch } from "vue";
+import { onMounted, ref, toRef, toRefs, watch } from "vue";
 import OverlayMultiSelect from "./OverlayMultiSelect.vue";
 import OverlaySelect from "./OverlaySelect.vue";
 import { getCookie, setCookie } from "../helpers/cookieHandling";
@@ -25,10 +25,18 @@ const props = defineProps({
   title: { type: String, required: true },
   desiredOverlayId: { type: String, required: true },
   videoPlayerToAttachTo: { type: String, required: true },
+  websocketUrl: { type: String, required: true },
 });
-const desiredOverlayIdPropRef = toRef(props, "desiredOverlayId");
-const titlePropRef = toRef(props, "title");
-const videoPlayerToAttachToPropRef = toRef(props, "videoPlayerToAttachTo");
+// const desiredOverlayIdPropRef = toRef(props, "desiredOverlayId");
+// const titlePropRef = toRef(props, "title");
+// const videoPlayerToAttachToPropRef = toRef(props, "videoPlayerToAttachTo");
+// const websocketURLToPropRef = toRef(props, "websocketURL");
+const {
+  desiredOverlayId: desiredOverlayIdPropRef,
+  title: titlePropRef,
+  videoPlayerToAttachTo: videoPlayerToAttachToPropRef,
+  websocketUrl: websocketUrlToPropRef,
+} = toRefs(props);
 
 const overlayComponentOptions = {
   OverlaySelect: OverlaySelect,
@@ -81,9 +89,7 @@ const onSendAnswerToOverlayContent = (answer) => {
   }
 };
 
-webSocketConnection = new WebSocket(
-  "wss://sonim20w02.execute-api.eu-central-1.amazonaws.com/v1"
-);
+webSocketConnection = new WebSocket(websocketUrlToPropRef.value);
 
 // const getCookie = (cookieName: string): string => {
 //   const name = cookieName + "=";
@@ -203,14 +209,11 @@ webSocketConnection.onmessage = async (event) => {
 };
 
 onMounted(() => {
-  /*   const list = document.getElementsByTagName("input")[0];
-  list.style.background = optionPropRef.value?.css_styling.background; */
   setTimeout(() => {
     const overlay = document.querySelector(`.${titlePropRef.value}`);
     console.log(overlay);
     document
-      .querySelector(`.${videoPlayerToAttachToPropRef.value}`)
-      .getElementsByTagName("video-js")[0]
+      .querySelector(`${videoPlayerToAttachToPropRef.value}`)
       .appendChild(overlay);
   });
 });

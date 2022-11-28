@@ -21,7 +21,8 @@
         v-if="acceptedCookie"
         desired-overlay-id="as5pionaspo5napsot"
         title="overlay_container_1"
-        video-player-to-attach-to="videoJsPlayer"
+        video-player-to-attach-to=".videoJsPlayer video-js"
+        websocket-url="wss://sonim20w02.execute-api.eu-central-1.amazonaws.com/v1"
       />
       <!-- <Overlay
         desired-overlay-id="as5pionaspo5napsot"
@@ -103,9 +104,6 @@ onMounted(() => {
   grid-template-rows: auto;
   grid-template-areas: "videoPlayers";
   @apply absolute left-0 top-0;
-}
-.container > div {
-  @apply border-2 border-solid border-gray-500;
 }
 
 .videoPlayers {

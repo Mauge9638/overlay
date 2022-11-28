@@ -32,7 +32,7 @@ const getSocketContext = (event) => {
             const key = data.Items[0].id;
             return updateConnectionsTable(key, {
               UpdateExpression:
-                "set connectedToOverlayId = :connectedToOverlayIdl, currentConnectionId = :currentConnectionId",
+                "set connectedToOverlayId = :connectedToOverlayId, currentConnectionId = :currentConnectionId",
               ExpressionAttributeValues: {
                 ":connectedToOverlayId": null,
                 ":currentConnectionId": null,

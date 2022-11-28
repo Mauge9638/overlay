@@ -96,12 +96,6 @@
         </div>
       </div>
     </div>
-    <div class="websocket_connection_status">
-      <p v-if="(connectionStatus = 'open')" class="bg-green-800">
-        Connection is: {{ connectionStatus }}
-      </p>
-      <p v-else class="bg-red-800">Connection is: {{ connectionStatus }}</p>
-    </div>
   </div>
 </template>
 
@@ -112,7 +106,6 @@ import { nanoid } from "nanoid";
 const overlaysFromAWSOverlayTable = ref([]);
 const overlaySelected = ref("");
 const overlayContentSelected = ref({});
-const connectionStatus = ref("");
 const refreshDataFrequency = ref(10000);
 const autoRefreshDataActive = ref(false);
 
@@ -155,17 +148,11 @@ webSocketConnection = new WebSocket(
 webSocketConnection.onopen = async (event) => {
   console.log("onopen");
   console.log(event);
-  connectionStatus.value = event.type;
   webSocketConnection.send(`{ "action": "getOverlays"}`);
 };
 webSocketConnection.onerror = (event) => {
   console.log("onerror");
   console.log(event);
-  connectionStatus.value = event.type;
-};
-
-webSocketConnection.onclose = (event) => {
-  connectionStatus.value = event.type;
 };
 
 webSocketConnection.onmessage = (event) => {
@@ -183,7 +170,7 @@ webSocketConnection.onmessage = (event) => {
 
 <style>
 .container {
-  @apply absolute top-2 left-2 w-full h-fit grid grid-cols-2 gap-4 grid-rows-1;
+  @apply absolute top-2 left-2 w-full h-fit grid grid-cols-1 gap-4 grid-rows-1;
 }
 .selector_container {
   @apply text-left col-span-1;
