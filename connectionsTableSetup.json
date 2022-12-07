@@ -3,14 +3,18 @@
     "connectedToOverlayId": "as5pionaspo5napsot",
     "currentConnectionId": "b2F-VeSHliACHiQ=",
     "answered": {
-      "as5pionaspo5napsot": {
-        "a590jsa-05ja": true
-      }
+      "as5pionaspo5napsot": ["a590jsa05ja"]
     }
   },
-  // ------- another item
   "bb875b9a-3546-492c-8498-73e1c360a794": {
     "connectedToOverlayId": "as5pionaspo5napsot",
     "currentConnectionId": "b2F2CfQbFiACFrw="
+  },
+  "as59js2a-3546-492c-8498-73e1c360a8l0": {
+    "connectedToOverlayId": null,
+    "currentConnectionId": null,
+    "answered": {
+      "as5pionaspo5napsot": ["a590jsa05ja", "ba52sy0as501"]
+    }
   }
 }
