@@ -138,5 +138,95 @@
         }
       }
     }
+  },
+  "908awh98ahs689as896": {
+    "broadcastTitle": "Some broadcast regarding the election",
+    "overlayContent": {
+      "a5s0a0gmjs0aw9": {
+        "answers": {
+          "sv": {
+            "amount": 0
+          },
+          "svi": {
+            "amount": 0
+          },
+          "svø": {
+            "amount": 0
+          },
+          "sø": {
+            "amount": 0
+          },
+          "vi": {
+            "amount": 0
+          }
+        },
+        "answerType": "Multiple Integer",
+        "componentName": "OverlayMultiSelect",
+        "props": {
+          "options": [
+            {
+              "label": "SV",
+              "value": "sv"
+            },
+            {
+              "label": "SVI",
+              "value": "svi"
+            },
+            {
+              "label": "VI",
+              "value": "vi"
+            },
+            {
+              "label": "SØ",
+              "value": "sø"
+            },
+            {
+              "label": "SVØ",
+              "value": "svø"
+            }
+          ],
+          "title": "Which constellations would you like?"
+        }
+      },
+      "a8sh58ah5": {
+        "answers": {
+          "enhedslisten": {
+            "amount": 0
+          },
+          "liberal_alliance": {
+            "amount": 0
+          },
+          "socialdemokratiet": {
+            "amount": 0
+          },
+          "venstre": {
+            "amount": 0
+          }
+        },
+        "answerType": "Integer",
+        "componentName": "OverlaySelect",
+        "props": {
+          "options": [
+            {
+              "label": "Enhedslisten",
+              "value": "enhedslisten"
+            },
+            {
+              "label": "Liberal Alliance",
+              "value": "liberal_alliance"
+            },
+            {
+              "label": "Socialdemokratiet",
+              "value": "socialdemokratiet"
+            },
+            {
+              "label": "Venstre",
+              "value": "venstre"
+            }
+          ],
+          "title": "Which political party won the debate?"
+        }
+      }
+    }
   }
 }
