@@ -67,9 +67,7 @@ const updateConnectionsTable = async (
 
 exports.overlayIdCheckerHandler = async (event) => {
   if (event.requestContext) {
-    const { send } = getSocketContext(event);
-    const connectionId = event.requestContext.connectionId;
-    const routeKey = event.requestContext.routeKey;
+    const { send, connectionId, routeKey } = getSocketContext(event);
     let body = {};
 
     try {
@@ -81,28 +79,9 @@ exports.overlayIdCheckerHandler = async (event) => {
     }
 
     switch (routeKey) {
-      case "test":
-        return send(connectionId, {
-          subject: "test",
-          message: `This response was pushed through Lambda by the user: ${body?.name}. To the user with connectionId: ${connectionId}`,
-        })
-          .then(() => {
-            return Promise.resolve();
-          })
-          .then(() => {
-            const response = {
-              isBase64Encoded: false,
-              statusCode: 200,
-              body: "",
-            };
-
-            return response;
-          });
       case "checkOverlayCookieId":
         const { overlayIdCookieKey, connectedToOverlayId } = body?.content;
         if (overlayIdCookieKey && connectedToOverlayId) {
-          // const overlayIdCookieKey = body?.overlayIdCookieKey;
-          // const connectedToOverlayId = body?.connectedToOverlayId;
           try {
             return getConnectionsTableItem(overlayIdCookieKey)
               .then((data) => {

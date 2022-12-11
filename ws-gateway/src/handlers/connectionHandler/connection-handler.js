@@ -57,9 +57,7 @@ const scanConnectionsTable = async (
 
 exports.connectionHandler = async (event) => {
   if (event.requestContext) {
-    const { send } = getSocketContext(event);
-    const connectionId = event.requestContext.connectionId;
-    const routeKey = event.requestContext.routeKey;
+    const { routeKey } = getSocketContext(event);
     let body = {};
 
     try {
