@@ -19,28 +19,17 @@
       </div>
       <overlay
         v-if="acceptedCookie"
-        desired-overlay-id="as5pionaspo5napsot"
+        desired-overlay-id="908awh98ahs689as896"
         title="overlay_container_1"
         video-player-to-attach-to=".videoJsPlayer video-js"
-        websocket-url="wss://sonim20w02.execute-api.eu-central-1.amazonaws.com/v1"
+        websocket-url="wss://6ep2ajam6j.execute-api.eu-central-1.amazonaws.com/v1"
       />
-      <!-- <Overlay
-        desired-overlay-id="as5pionaspo5napsot"
-        title="overlay_container_2"
-        video-player-to-attach-to="videoJsPlayer2"
-      /> -->
       <div class="videoJsPlayer">
         <video-js-component
           :options="videoJsOptions"
           title="VideoJsPlayer"
         ></video-js-component>
       </div>
-      <!-- <div class="videoJsPlayer2">
-        <VideoJSComponent
-          :options="videoJsOptions2"
-          title="VideoJsPlayer2"
-        ></VideoJSComponent>
-      </div> -->
     </div>
   </div>
 </template>
@@ -49,8 +38,7 @@
 import { onMounted, ref, watch } from "vue";
 import Overlay from "./Overlay.vue";
 import VideoJsComponent from "./VideoJsComponent.vue";
-import ironGrip from "../assets/videos/irongrip.mp4";
-import OSGILab from "../assets/videos/OSGILab.mp4";
+import TheDebateAndSolution from "../assets/videos/TheDebateAndSolution.mp4";
 import { getCookie } from "../helpers/cookieHandling";
 
 const acceptedCookie = ref(false);
@@ -60,7 +48,7 @@ const videoJsOptions = {
   preload: "auto",
   controls: true,
   fluid: true,
-  sources: { src: OSGILab, type: "video/mp4" },
+  sources: { src: TheDebateAndSolution, type: "video/mp4" },
 };
 
 const acceptCookie = () => {

@@ -1,10 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Resources:
-  MyWebSocketApi:
+  OverlayBackend:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: MyWebSocketApi
+      Name: OverlayBackend
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: $request.body.action
   DependenciesLayer:
@@ -106,7 +106,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId:
-        Ref: MyWebSocketApi
+        Ref: OverlayBackend
       RouteKey: $connect
       OperationName: ConnectRoute
       Target:
@@ -118,7 +118,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId:
-        Ref: MyWebSocketApi
+        Ref: OverlayBackend
       Description: Connect Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
@@ -127,7 +127,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId:
-        Ref: MyWebSocketApi
+        Ref: OverlayBackend
       Description: CheckOverlayCookieId Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
@@ -136,7 +136,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId:
-        Ref: MyWebSocketApi
+        Ref: OverlayBackend
       Description: OverlayHandler Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
@@ -145,7 +145,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId:
-        Ref: MyWebSocketApi
+        Ref: OverlayBackend
       RouteKey: checkOverlayCookieId
       OperationName: CheckOverlayCookieIdRoute
       Target:
@@ -157,7 +157,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId:
-        Ref: MyWebSocketApi
+        Ref: OverlayBackend
       RouteKey: getOverlays
       OperationName: GetOverlaysRoute
       Target:
@@ -169,7 +169,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId:
-        Ref: MyWebSocketApi
+        Ref: OverlayBackend
       RouteKey: addOverlay
       OperationName: AddOverlayRoute
       Target:
@@ -181,7 +181,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId:
-        Ref: MyWebSocketApi
+        Ref: OverlayBackend
       RouteKey: getOverlayContent
       OperationName: GetOverlayContentRoute
       Target:
@@ -193,7 +193,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId:
-        Ref: MyWebSocketApi
+        Ref: OverlayBackend
       RouteKey: triggerOverlayOnUsers
       OperationName: TriggerOverlayOnUsersRoute
       Target:
@@ -205,7 +205,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId:
-        Ref: MyWebSocketApi
+        Ref: OverlayBackend
       RouteKey: sendAnswerToOverlayContent
       OperationName: SendAnswerToOverlayContentRoute
       Target:
@@ -221,11 +221,11 @@ Resources:
       DeploymentId:
         Ref: Deployment
       ApiId:
-        Ref: MyWebSocketApi
+        Ref: OverlayBackend
   ConnectionHandlerFunctionPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
-    - MyWebSocketApi
+    - OverlayBackend
     - ConnectionHandlerFunction
     Properties:
       Action: lambda:InvokeFunction
@@ -235,7 +235,7 @@ Resources:
   OverlayIdCheckerHandlerFunctionPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
-    - MyWebSocketApi
+    - OverlayBackend
     - OverlayIdCheckerHandlerFunction
     Properties:
       Action: lambda:InvokeFunction
@@ -245,7 +245,7 @@ Resources:
   OverlayHandlerFunctionPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
-    - MyWebSocketApi
+    - OverlayBackend
     - OverlayHandlerFunction
     Properties:
       Action: lambda:InvokeFunction
@@ -297,4 +297,4 @@ Resources:
     - ConnectRoute
     Properties:
       ApiId:
-        Ref: MyWebSocketApi
+        Ref: OverlayBackend

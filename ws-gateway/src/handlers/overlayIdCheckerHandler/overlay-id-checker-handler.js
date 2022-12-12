@@ -1,9 +1,7 @@
 const aws = require("aws-sdk");
 const crypto = require("crypto");
-// const dynamodb = require("aws-sdk/clients/dynamodb");
 const docClient = new aws.DynamoDB.DocumentClient();
 const connectionsTable = process.env.CONNECTIONS_TABLE;
-const overlayTable = process.env.OVERLAY_TABLE;
 
 const getSocketContext = (event) => {
   const { domainName, stage, connectionId, routeKey } = event.requestContext;
@@ -79,7 +77,7 @@ exports.overlayIdCheckerHandler = async (event) => {
     }
 
     switch (routeKey) {
-      case "checkOverlayCookieId":
+      case "checkOverlayCookieId": {
         const { overlayIdCookieKey, connectedToOverlayId } = body?.content;
         if (overlayIdCookieKey && connectedToOverlayId) {
           try {
@@ -188,28 +186,15 @@ exports.overlayIdCheckerHandler = async (event) => {
           };
           return response;
         }
-        break;
-      default:
+      }
+      default: {
         const response = {
           isBase64Encoded: false,
           statusCode: 400,
           body: "",
         };
         return response;
+      }
     }
   }
-  // const response = {
-  //   isBase64Encoded: false,
-  //   statusCode: 200,
-  //   body: "",
-  // };
-
-  // return response;
-
-  // Creates a new item, or replaces an old item with a new item
-  // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#put-property
-
-  // const msg = `Connection successful, your connectionId: ${connectionId} has been added to the database`;
-
-  // await send(msg);
 };

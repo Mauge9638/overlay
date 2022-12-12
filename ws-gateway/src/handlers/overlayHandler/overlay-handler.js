@@ -1,6 +1,5 @@
 const aws = require("aws-sdk");
 const https = require("https");
-// const dynamodb = require("aws-sdk/clients/dynamodb");
 const docClient = new aws.DynamoDB.DocumentClient();
 const connectionsTable = process.env.CONNECTIONS_TABLE;
 const overlayTable = process.env.OVERLAY_TABLE;
@@ -146,7 +145,7 @@ exports.overlayHandler = async (event) => {
 
     console.log(routeKey);
     switch (routeKey) {
-      case "getOverlays":
+      case "getOverlays": {
         try {
           return scanOverlayTable(null, null)
             .then((data) => {
@@ -179,10 +178,20 @@ exports.overlayHandler = async (event) => {
 
           return response;
         }
-        break;
-      case "addOverlay":
-        const { idValue, broadcastTitle, overlayContent } = body?.content;
-        if (idValue && broadcastTitle && overlayContent) {
+      }
+      case "addOverlay": {
+        const {
+          idValue,
+          broadcastTitle,
+          overlayContent,
+          clientWebsocketApiKey,
+        } = body?.content;
+        if (
+          idValue &&
+          broadcastTitle &&
+          overlayContent &&
+          websocketApiKey === clientWebsocketApiKey
+        ) {
           try {
             return addToOverlayTable(idValue, broadcastTitle, overlayContent)
               .then(() => {
@@ -230,7 +239,8 @@ exports.overlayHandler = async (event) => {
             return response;
           }
         }
-      case "getOverlayContent":
+      }
+      case "getOverlayContent": {
         const { desiredOverlayId } = body?.content;
         try {
           if (desiredOverlayId) {
@@ -281,7 +291,8 @@ exports.overlayHandler = async (event) => {
 
           return response;
         }
-      case "triggerOverlayOnUsers":
+      }
+      case "triggerOverlayOnUsers": {
         const {
           overlayToTrigger,
           overlayContentToTrigger,
@@ -352,7 +363,8 @@ exports.overlayHandler = async (event) => {
           };
           return response;
         }
-      case "sendAnswerToOverlayContent":
+      }
+      case "sendAnswerToOverlayContent": {
         const { overlayId, overlayContentId, answer, overlayCookieId } =
           body?.content;
         if (overlayId && overlayContentId && answer && overlayCookieId) {
@@ -449,23 +461,15 @@ exports.overlayHandler = async (event) => {
           };
           return response;
         }
-      case "sendToAllUsers":
-        break;
-
-      default:
+      }
+      default: {
         const response = {
           isBase64Encoded: false,
           statusCode: 400,
           body: "Route does not exist",
         };
         return response;
+      }
     }
   }
-
-  // Creates a new item, or replaces an old item with a new item
-  // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#put-property
-
-  // const msg = `Connection successful, your connectionId: ${connectionId} has been added to the database`;
-
-  // await send(msg);
 };

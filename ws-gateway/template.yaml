@@ -1,25 +1,11 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
-# Package:
-#   exclude:
-#     - node_modules/**
-
 Resources:
-  # LambdaRequestAuthFunction:
-  #   Type: AWS::Serverless::Function
-  #   Properties:
-  #     Handler: src/handlers/authorizer.handler
-  #     Timeout: 30
-  #     Runtime: nodejs16.x
-  #     # CodeUri: ./
-  #     Policies:
-  #       - AWSLambda_FullAccess
-  #       - CloudWatchLogsFullAccess
-  MyWebSocketApi:
+  OverlayBackend:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: MyWebSocketApi
+      Name: OverlayBackend
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
 
@@ -69,7 +55,7 @@ Resources:
         - !Ref DependenciesLayer
       Environment:
         Variables:
-          # Make table name accessible as environment variable from function code during execution
+          # Make table names accessible as environment variable from function code during execution
           CONNECTIONS_TABLE: !Ref ConnectionsTable
           OVERLAY_TABLE: !Ref OverlayTable
       # CodeUri: ./
@@ -95,7 +81,7 @@ Resources:
         - !Ref DependenciesLayer
       Environment:
         Variables:
-          # Make table name accessible as environment variable from function code during execution
+          # Make table names and api key accessible as environment variable from function code during execution
           CONNECTIONS_TABLE: !Ref ConnectionsTable
           OVERLAY_TABLE: !Ref OverlayTable
           WEBSOCKET_API_KEY: "Hpoo7KX6aT85bHmzYgif!Y3E7a7rHkiXgmyaJStb"
@@ -114,7 +100,7 @@ Resources:
   ConnectRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref MyWebSocketApi
+      ApiId: !Ref OverlayBackend
       RouteKey: "$connect"
       OperationName: ConnectRoute
       Target: !Join
@@ -125,7 +111,7 @@ Resources:
   ConnectionHandlerLambdaIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ApiId: !Ref MyWebSocketApi
+      ApiId: !Ref OverlayBackend
       Description: Connect Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
@@ -134,7 +120,7 @@ Resources:
   OverlayIdCheckerHandlerLambdaIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ApiId: !Ref MyWebSocketApi
+      ApiId: !Ref OverlayBackend
       Description: CheckOverlayCookieId Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
@@ -143,7 +129,7 @@ Resources:
   OverlayHandlerLambdaIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ApiId: !Ref MyWebSocketApi
+      ApiId: !Ref OverlayBackend
       Description: OverlayHandler Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
@@ -152,7 +138,7 @@ Resources:
   CheckOverlayCookieIdRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref MyWebSocketApi
+      ApiId: !Ref OverlayBackend
       RouteKey: "checkOverlayCookieId"
       OperationName: CheckOverlayCookieIdRoute
       Target: !Join
@@ -163,7 +149,7 @@ Resources:
   GetOverlaysRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref MyWebSocketApi
+      ApiId: !Ref OverlayBackend
       RouteKey: "getOverlays"
       OperationName: GetOverlaysRoute
       Target: !Join
@@ -174,7 +160,7 @@ Resources:
   AddOverlayRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref MyWebSocketApi
+      ApiId: !Ref OverlayBackend
       RouteKey: "addOverlay"
       OperationName: AddOverlayRoute
       Target: !Join
@@ -185,7 +171,7 @@ Resources:
   GetOverlayContentRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref MyWebSocketApi
+      ApiId: !Ref OverlayBackend
       RouteKey: "getOverlayContent"
       OperationName: GetOverlayContentRoute
       Target: !Join
@@ -196,7 +182,7 @@ Resources:
   TriggerOverlayOnUsersRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref MyWebSocketApi
+      ApiId: !Ref OverlayBackend
       RouteKey: "triggerOverlayOnUsers"
       OperationName: TriggerOverlayOnUsersRoute
       Target: !Join
@@ -207,7 +193,7 @@ Resources:
   SendAnswerToOverlayContentRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref MyWebSocketApi
+      ApiId: !Ref OverlayBackend
       RouteKey: "sendAnswerToOverlayContent"
       OperationName: SendAnswerToOverlayContentRoute
       Target: !Join
@@ -215,29 +201,18 @@ Resources:
         - - "integrations"
           - !Ref OverlayHandlerLambdaIntegration
 
-  # Auth:
-  #   Type: "AWS::ApiGatewayV2::Authorizer"
-  #   Properties:
-  #     Name: My-Authorizer
-  #     ApiId: !Ref MyWebSocketApi
-  #     AuthorizerType: REQUEST
-  #     AuthorizerUri:
-  #       Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaRequestAuthFunction.Arn}/invocations
-  #     IdentitySource:
-  #       - "route.request.header.x-some-header-to-auth-from"
-
   Stage:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       StageName: v1
       Description: Version 1 'stage'
       DeploymentId: !Ref Deployment
-      ApiId: !Ref MyWebSocketApi
+      ApiId: !Ref OverlayBackend
 
   ConnectionHandlerFunctionPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
-      - MyWebSocketApi
+      - OverlayBackend
       - ConnectionHandlerFunction
     Properties:
       Action: lambda:InvokeFunction
@@ -247,7 +222,7 @@ Resources:
   OverlayIdCheckerHandlerFunctionPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
-      - MyWebSocketApi
+      - OverlayBackend
       - OverlayIdCheckerHandlerFunction
     Properties:
       Action: lambda:InvokeFunction
@@ -257,7 +232,7 @@ Resources:
   OverlayHandlerFunctionPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
-      - MyWebSocketApi
+      - OverlayBackend
       - OverlayHandlerFunction
     Properties:
       Action: lambda:InvokeFunction
@@ -310,13 +285,4 @@ Resources:
       - SendAnswerToOverlayContentRoute
       - ConnectRoute
     Properties:
-      ApiId: !Ref MyWebSocketApi
-  # AuthorizerFunctionPermission:
-  #   Type: AWS::Lambda::Permission
-  #   DependsOn:
-  #     - MyWebSocketApi
-  #     - LambdaRequestAuthFunction
-  #   Properties:
-  #     Action: lambda:InvokeFunction
-  #     FunctionName: !Ref LambdaRequestAuthFunction
-  #     Principal: apigateway.amazonaws.com
+      ApiId: !Ref OverlayBackend

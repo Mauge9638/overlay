@@ -142,7 +142,7 @@ const startAutoRefresh = () => {
 let webSocketConnection: WebSocket;
 
 webSocketConnection = new WebSocket(
-  "wss://sonim20w02.execute-api.eu-central-1.amazonaws.com/v1"
+  "wss://6ep2ajam6j.execute-api.eu-central-1.amazonaws.com/v1"
 );
 
 webSocketConnection.onopen = async (event) => {

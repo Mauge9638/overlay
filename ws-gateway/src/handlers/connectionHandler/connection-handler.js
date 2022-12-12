@@ -1,5 +1,4 @@
 const aws = require("aws-sdk");
-// const dynamodb = require("aws-sdk/clients/dynamodb");
 const docClient = new aws.DynamoDB.DocumentClient();
 const connectionsTable = process.env.CONNECTIONS_TABLE;
 
@@ -70,7 +69,7 @@ exports.connectionHandler = async (event) => {
 
     console.log(routeKey);
     switch (routeKey) {
-      case "$connect":
+      case "$connect": {
         const response = {
           isBase64Encoded: false,
           statusCode: 200,
@@ -78,16 +77,10 @@ exports.connectionHandler = async (event) => {
         };
 
         return response;
+      }
       // Not used due to $disconnect being a "best effort operation", therefor it's not reliable and therefor not trustworthy
       case "$disconnect":
         break;
     }
   }
-
-  // Creates a new item, or replaces an old item with a new item
-  // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#put-property
-
-  // const msg = `Connection successful, your connectionId: ${connectionId} has been added to the database`;
-
-  // await send(msg);
 };

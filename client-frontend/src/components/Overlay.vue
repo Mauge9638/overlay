@@ -40,7 +40,6 @@ const overlayComponentOptions = {
 };
 
 const overlayChosenRef = ref("");
-const overlayAnswerRef = ref("");
 const overlays = ref({});
 const componentToLoad = ref("");
 
@@ -58,7 +57,6 @@ watch(overlayChosenRef, () => {
 });
 
 const onSendAnswerToOverlayContent = (answer) => {
-  /*  const overlayContainer = document.querySelector(`.${titlePropRef.value}`); */
   console.log(answer);
   const overlayContainer = document.querySelector(`.${titlePropRef.value}`);
   webSocketConnection.send(
